@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "name": "John",
+      "surname": "Monday",
+      "email": "johnmonday@gmail.com",
+      "password": "JohnMonday",
+      "id": 0
+    },
+    {
+      "name": "Nikita",
+      "surname": "Khmelevskiy",
+      "email": "nikitkakhmelevskiy1@gmail.com",
+      "password": "asdfasdfasdfA1",
+      "id": 1
+    }
+  ]
+}

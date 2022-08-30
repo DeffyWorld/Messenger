@@ -1,58 +1,26 @@
 import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
-    </div>
-  );
+import { Route, Routes } from 'react-router-dom';
+
+import Chat from './components/Chat';
+import Authorization from './pages/Authorization';
+import Main from './pages/Main';
+import Settings from './pages/Settings';
+
+
+export default function App() {
+	return (
+		<Routes>
+			<Route path='/' element={<Main />} >
+				{/* <Chat /> */}
+			</Route>
+
+			<Route path='authorization' element={<Authorization/>} >
+				<Route path=':logIn' element={<Authorization/>} />
+				<Route path=':signIn' element={<Authorization/>} />
+			</Route>
+
+			<Route path='settings' element={<Settings />} />
+		</Routes>
+	);
 }
-
-export default App;
