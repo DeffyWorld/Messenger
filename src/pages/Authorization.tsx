@@ -5,9 +5,14 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import styled from 'styled-components';
 import axios from 'axios';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../redux/hooks';
 import { setActiveUser } from '../redux/slices/activeUserSlice';
+
+
+
+
+
 
 
 
@@ -52,9 +57,6 @@ const Tab = styled.h2<{isActive: boolean, params: any}>`
             opacity: 1;
         }
     `}
-`
-const StyledLink = styled(Link)`
-    text-decoration: none;
 `
 
 
@@ -139,10 +141,16 @@ const Button = styled.div<{isValid: boolean}>`
 
 
 
+
+
+
+
+
+
 export default function Authorization() {
-    const params = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const [params, setParams] = useState('logIn');
 
 
     const usersResponse = useMemo(() => {
@@ -158,6 +166,10 @@ export default function Authorization() {
 
     }, [usersResponse])
     
+
+    function changeParams() {
+        params === 'logIn' ? setParams('signIn') : setParams('logIn');
+    }
 
 
     const {
@@ -181,7 +193,7 @@ export default function Authorization() {
     }
 
     function onSubmit(data: AuthorizationFormInputs): void {
-        if (params.logIn === ':signIn') {
+        if (params === 'signIn') {
             let isUserExist = false;
             usersResponse.users.forEach((item: AuthorizationFormInputs) => {
                 if (item.email === data.email) {
@@ -191,7 +203,7 @@ export default function Authorization() {
             })
             !isUserExist && axios({
                 method: 'post',
-                url: `${window.location.origin}/users.json`, /* http://localhost:3001/users */
+                url: `${window.location.origin}`, /* http://localhost:3001/users */
                 data: {
                     name: data.name,
                     surname: data.surname,
@@ -205,7 +217,7 @@ export default function Authorization() {
                     email: data.email,
                     password: data.password
                 }));
-                navigate('../', { replace: true });
+                navigate('/', { replace: true });
             })
         } else {
             usersResponse.users.forEach((item: AuthorizationFormInputs) => {
@@ -216,7 +228,7 @@ export default function Authorization() {
                         email: item.email,
                         password: item.password
                     }));
-                    navigate('../', { replace: true });
+                    navigate('/', { replace: true });
                 }
             })
         }
@@ -227,12 +239,8 @@ export default function Authorization() {
         <Wrapper>
             <Form onSubmit={handleSubmit(onSubmit)}>
                 <Tabs>
-                    <StyledLink to=':logIn'>
-                        <Tab isActive={params.logIn === ':logIn' ? true : false} params={params}>Log In</Tab>
-                    </StyledLink>
-                    <StyledLink to=':signIn'>
-                        <Tab isActive={params.logIn === ':signIn' ? true : false} params={params}>Sign In</Tab>
-                    </StyledLink>
+                    <Tab isActive={params === 'logIn' ? true : false} params={params} onClick={changeParams}>Log In</Tab>
+                    <Tab isActive={params === 'signIn' ? true : false} params={params} onClick={changeParams}>Sign In</Tab>
                 </Tabs>
 
 
@@ -250,11 +258,11 @@ export default function Authorization() {
                             value: 60,
                             message: "Not more than sixty characters",
                         },
-                        disabled: params.logIn === ':logIn' ? true : false
+                        disabled: params === 'logIn' ? true : false
                     })}
                     isValid={errors?.name ? false : true}
                     onKeyDown={enterClickHandler}
-                    isHidden={params.logIn === ':logIn' ? true : false}
+                    isHidden={params === 'logIn' ? true : false}
                 />
                 <ErrorMessage>{errors?.name && errors?.name?.message}</ErrorMessage>
 
@@ -272,11 +280,11 @@ export default function Authorization() {
                             value: 60,
                             message: "Not more than sixty characters",
                         },
-                        disabled: params.logIn === ':logIn' ? true : false
+                        disabled: params === 'logIn' ? true : false
                     })}
                     isValid={errors?.surname ? false : true}
                     onKeyDown={enterClickHandler}
-                    isHidden={params.logIn === ':logIn' ? true : false}
+                    isHidden={params === 'logIn' ? true : false}
                 />
                 <ErrorMessage>{errors?.surname && errors?.surname?.message}</ErrorMessage>
 
@@ -354,16 +362,16 @@ export default function Authorization() {
                                 "Not more than a hundred characters",
                         },
                         validate: value => value === currentPassword || "The passwords do not match",
-                        disabled: params.logIn === ':logIn' ? true : false
+                        disabled: params === 'logIn' ? true : false
                     })}
                     isValid={errors?.passwordConfirm ? false : true}
                     onKeyDown={enterClickHandler}
-                    isHidden={params.logIn === ':logIn' ? true : false}
+                    isHidden={params === 'logIn' ? true : false}
                 />
-                <ShowPassword onClick={changeInputType} isHidden={params.logIn === ':logIn' || inputType === 'password'}>
+                <ShowPassword onClick={changeInputType} isHidden={params === 'logIn' || inputType === 'password'}>
                     <AiOutlineEye/>
                 </ShowPassword>
-                <ShowPassword onClick={changeInputType} isHidden={params.logIn === ':logIn' || inputType === 'text'}>
+                <ShowPassword onClick={changeInputType} isHidden={params === 'logIn' || inputType === 'text'}>
                     <AiOutlineEyeInvisible/>
                 </ShowPassword>
                 <ErrorMessage>{errors?.passwordConfirm && errors?.passwordConfirm?.message}</ErrorMessage>
@@ -373,7 +381,7 @@ export default function Authorization() {
                 <Button
                     onClick={handleSubmit(onSubmit)}
                     isValid={
-                        params.logIn === ':logIn'
+                        params === 'logIn'
                             ?   errors.email !== undefined ||
                                 dirtyFields.email !== true ||
                                 errors.password !== undefined ||
@@ -390,7 +398,7 @@ export default function Authorization() {
                                 dirtyFields.passwordConfirm !== true 
                     }
                 >
-                    {params.logIn === ':logIn' ? 'Login' : 'Register'}
+                    {params === 'logIn' ? 'Login' : 'Register'}
                 </Button>
             </Form>
         </Wrapper>

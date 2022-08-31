@@ -1,11 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import store from './redux/store';
+import store, { persistor } from './redux/store';
+import { PersistGate } from 'redux-persist/integration/react';
 import { Reset } from 'styled-reset';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { Theme } from './types/theme';
 import App from './App';
 
@@ -59,13 +60,15 @@ const theme: Theme = {
 root.render(
 	<React.StrictMode>
 		<Provider store={store}>
-			<ThemeProvider theme={theme} >
-				<Router >
-					<Reset />
-					<Global />
-					<App />
-				</Router>
-			</ThemeProvider>
+			<PersistGate loading={null} persistor={persistor}>
+				<ThemeProvider theme={theme} >
+					<Router>
+						<Reset />
+						<Global />
+						<App />
+					</Router>
+				</ThemeProvider>
+			</PersistGate>
 		</Provider>
 	</React.StrictMode>
 );
