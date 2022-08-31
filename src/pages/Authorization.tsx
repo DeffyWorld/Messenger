@@ -43,6 +43,7 @@ const Tab = styled.h2<{isActive: boolean, params: any}>`
     font-weight: 700;
     font-size: 22px;
     color: ${({theme}) => theme.colors.textPrimary};
+    cursor: pointer;
     opacity: 0.2;
     transition: 250ms;
 
@@ -161,8 +162,9 @@ export default function Authorization() {
     }, [])
     useEffect(() => {
         axios.get(`${window.location.origin}/users.json`)
-            .then(response => usersResponse.users = response.data)
+            .then(response => usersResponse.users = response.data.users)
             .catch(error => usersResponse.error = error.message)
+            console.log(usersResponse);
 
     }, [usersResponse])
     
@@ -179,7 +181,7 @@ export default function Authorization() {
         watch,
         setError
     } = useForm<AuthorizationFormInputs>({
-        mode: "onTouched"
+        mode: "all"
     });
 
     const currentPassword = watch('password');
