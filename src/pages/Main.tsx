@@ -1,11 +1,11 @@
 import React from 'react'
 import { useAppDispatch } from '../redux/hooks';
-import { resetActiveUser } from '../redux/slices/activeUserSlice';
+import { removeUser } from '../redux/slices/userSlice';
 
 export default function Main() {
     const dispatch = useAppDispatch();
     function a() {
-        dispatch(resetActiveUser());
+        dispatch(removeUser());
     }
     return (
         <div onClick={a} >Main</div>

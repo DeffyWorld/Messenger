@@ -1,14 +1,12 @@
 // ActiveUser
 
 export interface activeUserState {
-    name: string | null,
-	surname: string | null,
+    displayName: string | null
 	email: string | null,
-	password: string | null
+	uid: string | null
 }
 export interface activeUserPayload {
-    name: string,
-	surname: string,
+    displayName: string,
 	email: string,
-	password: string
+	uid: string 
 }

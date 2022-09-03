@@ -8,6 +8,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { Reset } from 'styled-reset';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Theme } from './types/theme';
+import './firebase';
 import App from './App';
 
 

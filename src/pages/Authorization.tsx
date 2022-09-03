@@ -1,13 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { AuthorizationFormInputs } from '../types/global';
+import { IconContext } from 'react-icons';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { FcGoogle } from 'react-icons/fc';
 import styled from 'styled-components';
-import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../redux/hooks';
-import { setActiveUser } from '../redux/slices/activeUserSlice';
+import { setUser } from '../redux/slices/userSlice';
+import { 
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    GoogleAuthProvider, 
+    signInWithRedirect,
+    getRedirectResult
+} from "firebase/auth";
 
 
 
@@ -105,7 +115,7 @@ const ShowPassword = styled.div<{isHidden: boolean}>`
 
 
 const Button = styled.div<{isValid: boolean}>`
-    margin-top: 30px;
+    margin-top: 40px;
     width: 100%;
     height: 40px;
     background: #985ACE;
@@ -140,6 +150,37 @@ const Button = styled.div<{isValid: boolean}>`
 `
 
 
+const Line = styled.div`
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    border-top: 0.5px solid ${({theme}) => theme.colors.textPrimary};
+`;
+
+
+const СontinueWithGoogle = styled.div`
+    width: 100%;
+    height: 40px;
+    padding: 0px 40px;
+    border: 1px solid #985ACE;
+    border-radius: 7px;
+    cursor: pointer;
+
+    font-family: SFPro;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 14px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    transition: 250ms;
+
+    &:hover {
+        background: #F8F1FF;
+    }
+`;
+
+
 
 
 
@@ -151,22 +192,8 @@ const Button = styled.div<{isValid: boolean}>`
 export default function Authorization() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const auth = getAuth();
     const [params, setParams] = useState('logIn');
-
-
-    const usersResponse = useMemo(() => {
-        return {
-            users: [],
-            error: ''
-        }
-    }, [])
-    useEffect(() => {
-        axios.get(`${window.location.origin}/users.json`)
-            .then(response => usersResponse.users = response.data.users)
-            .catch(error => usersResponse.error = error.message)
-            console.log(usersResponse);
-
-    }, [usersResponse])
     
 
     function changeParams() {
@@ -195,46 +222,60 @@ export default function Authorization() {
     }
 
     function onSubmit(data: AuthorizationFormInputs): void {
-        if (params === 'signIn') {
-            let isUserExist = false;
-            usersResponse.users.forEach((item: AuthorizationFormInputs) => {
-                if (item.email === data.email) {
-                    isUserExist = true;
-                    setError('email', {type: 'custom', message: 'User with this email already exists'});
-                }
-            })
-            !isUserExist && axios({
-                method: 'post',
-                url: `${window.location.origin}`, /* http://localhost:3001/users */
-                data: {
-                    name: data.name,
-                    surname: data.surname,
-                    email: data.email,
-                    password: data.password
-                }
-            }).then(() => {
-                dispatch(setActiveUser({
-                    name: data.name,
-                    surname: data.surname,
-                    email: data.email,
-                    password: data.password
+        if (params === 'logIn') {
+            signInWithEmailAndPassword(auth, data.email, data.password)
+                .then(() => {
+                    dispatch(setUser({
+                        displayName: auth.currentUser?.displayName!,
+                        email: auth.currentUser?.email!,
+                        uid: auth.currentUser?.uid!
+                    }));
+                    navigate('/', { replace: true });
+                })
+                .catch(error => {
+                    console.log(error.message);
+                });
+        } else {
+            createUserWithEmailAndPassword(auth, data.email, data.password)
+                .then(() => {
+                    updateProfile(auth.currentUser!, {
+                        displayName: `${data.name} ${data.surname}`
+                    }).then(() => {
+                        dispatch(setUser({
+                            displayName: auth.currentUser?.displayName!,
+                            email: auth.currentUser?.email!,
+                            uid: auth.currentUser?.uid!
+                        }));
+                        navigate('/', { replace: true });
+                    })
+                })
+                .catch(error => {
+                    console.log(error.message);
+                    error.message === 'Firebase: Error (auth/email-already-in-use).' 
+                        && setError('email', {type: 'custom', message: 'User with this email already exists'});
+                });
+        }        
+    }
+
+    function AuthorizationWithGoogle() {
+        const provider = new GoogleAuthProvider();
+        signInWithRedirect(auth, provider);
+    }
+
+    useEffect(() => {
+        getRedirectResult(auth)
+            .then(result => {
+                dispatch(setUser({
+                    displayName: auth.currentUser?.displayName!,
+                    email: auth.currentUser?.email!,
+                    uid: auth.currentUser?.uid!
                 }));
                 navigate('/', { replace: true });
             })
-        } else {
-            usersResponse.users.forEach((item: AuthorizationFormInputs) => {
-                if (item.email === data.email && item.password === data.password) {
-                    dispatch(setActiveUser({
-                        name: item.name,
-                        surname: item.surname,
-                        email: item.email,
-                        password: item.password
-                    }));
-                    navigate('/', { replace: true });
-                }
-            })
-        }
-    }
+    
+      
+    }, [auth, dispatch, navigate])
+    
 
 
     return (
@@ -402,6 +443,21 @@ export default function Authorization() {
                 >
                     {params === 'logIn' ? 'Login' : 'Register'}
                 </Button>
+
+
+
+                <Line/>
+
+
+
+                <СontinueWithGoogle onClick={AuthorizationWithGoogle}>
+                    <IconContext.Provider value={{ size: '1.4rem' }}>
+                        <div>
+                            <FcGoogle />
+                        </div>
+                    </IconContext.Provider>
+                    Сontinue with Google
+                </СontinueWithGoogle>
             </Form>
         </Wrapper>
     )

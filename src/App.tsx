@@ -7,18 +7,19 @@ import Chat from './components/Chat';
 import Authorization from './pages/Authorization';
 import Main from './pages/Main';
 import Settings from './pages/Settings';
+import { getAuth } from 'firebase/auth';
 
 
 export default function App() {
 	const navigate = useNavigate();
-	const { name, surname, email, password } = useAppSelector(state => state.activeUser);
+	const { displayName, email, uid } = useAppSelector(state => state.activeUser);
 
 	useEffect(() => {
-		if (name === null || surname === null || email === null || password === null) {
+		if (displayName === null || email === null || uid === null) {
 			navigate('authorization', { replace: true });
 		} 
 
-	}, [navigate, email, name, password, surname])
+	}, [displayName, email, navigate, uid])
 	
 
 
