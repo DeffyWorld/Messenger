@@ -38,6 +38,12 @@ const Global = createGlobalStyle`
 		src: url(${require('./assets/fonts/SFPro/SFProDisplay-Bold.woff')}) format("woff"),
 			url(${require('./assets/fonts/SFPro/SFProDisplay-Bold.woff2')}) format("woff2");
 	}
+	@font-face {
+		font-family: 'SFPro';
+		font-weight: 800;
+		src: url(${require('./assets/fonts/SFPro/SFProDisplay-Black.woff')}) format("woff"),
+			url(${require('./assets/fonts/SFPro/SFProDisplay-Black.woff2')}) format("woff2");
+    }
 `
 const theme: Theme = {
 	colors: {

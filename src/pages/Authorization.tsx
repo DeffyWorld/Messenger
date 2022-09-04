@@ -148,6 +148,21 @@ const Button = styled.div<{isValid: boolean}>`
         }
     `}
 `
+const Loader = styled.div`
+    margin-bottom: 40px;
+    width: 100%;
+    height: 40px;
+    background: ${({theme}) => theme.colors.bgPrimary};
+    border-radius: 7px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: ${({theme}) => theme.colors.textPrimary};
+    font-family: SFPro;
+    font-weight: 500;
+    font-size: 50px;
+`;
 
 
 const Line = styled.div`
@@ -193,12 +208,27 @@ export default function Authorization() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const auth = getAuth();
-    const [params, setParams] = useState('logIn');
-    
 
+
+    const [params, setParams] = useState('logIn');
     function changeParams() {
         params === 'logIn' ? setParams('signIn') : setParams('logIn');
     }
+
+
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [loader, setLoader] = useState<string>('.');
+    useEffect(() => {
+        if(isLoading) {
+            setTimeout(() => {
+                loader === '.' && setLoader('..');
+                loader === '..' && setLoader('...');
+                loader === '...' && setLoader('.');
+            }, 300);
+        }
+    
+    }, [isLoading, loader])
+    
 
 
     const {
@@ -222,6 +252,7 @@ export default function Authorization() {
     }
 
     function onSubmit(data: AuthorizationFormInputs): void {
+        setIsLoading(true);
         if (params === 'logIn') {
             signInWithEmailAndPassword(auth, data.email, data.password)
                 .then(() => {
@@ -230,6 +261,7 @@ export default function Authorization() {
                         email: auth.currentUser?.email!,
                         uid: auth.currentUser?.uid!
                     }));
+                    setIsLoading(false);
                     navigate('/', { replace: true });
                 })
                 .catch(error => {
@@ -246,6 +278,7 @@ export default function Authorization() {
                             email: auth.currentUser?.email!,
                             uid: auth.currentUser?.uid!
                         }));
+                        setIsLoading(false);
                         navigate('/', { replace: true });
                     })
                 })
@@ -264,7 +297,7 @@ export default function Authorization() {
 
     useEffect(() => {
         getRedirectResult(auth)
-            .then(result => {
+            .then(() => {
                 dispatch(setUser({
                     displayName: auth.currentUser?.displayName!,
                     email: auth.currentUser?.email!,
@@ -421,28 +454,34 @@ export default function Authorization() {
 
 
 
-                <Button
-                    onClick={handleSubmit(onSubmit)}
-                    isValid={
-                        params === 'logIn'
-                            ?   errors.email !== undefined ||
-                                dirtyFields.email !== true ||
-                                errors.password !== undefined ||
-                                dirtyFields.password !== true 
-                            :   errors.name !== undefined ||
-                                dirtyFields.name !== true ||
-                                errors.surname !== undefined ||
-                                dirtyFields.surname !== true ||
-                                errors.email !== undefined ||
-                                dirtyFields.email !== true ||
-                                errors.password !== undefined ||
-                                dirtyFields.password !== true ||
-                                errors.passwordConfirm !== undefined ||
-                                dirtyFields.passwordConfirm !== true 
-                    }
-                >
-                    {params === 'logIn' ? 'Login' : 'Register'}
-                </Button>
+                {!isLoading ?
+                    <Button
+                        onClick={handleSubmit(onSubmit)}
+                        isValid={
+                            params === 'logIn'
+                                ?   errors.email !== undefined ||
+                                    dirtyFields.email !== true ||
+                                    errors.password !== undefined ||
+                                    dirtyFields.password !== true 
+                                :   errors.name !== undefined ||
+                                    dirtyFields.name !== true ||
+                                    errors.surname !== undefined ||
+                                    dirtyFields.surname !== true ||
+                                    errors.email !== undefined ||
+                                    dirtyFields.email !== true ||
+                                    errors.password !== undefined ||
+                                    dirtyFields.password !== true ||
+                                    errors.passwordConfirm !== undefined ||
+                                    dirtyFields.passwordConfirm !== true 
+                        }
+                    >
+                        {params === 'logIn' ? 'Login' : 'Register'}
+                    </Button>
+                    :
+                    <Loader>
+                        {loader}
+                    </Loader>
+                }
 
 
 

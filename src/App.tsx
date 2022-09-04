@@ -14,6 +14,7 @@ export default function App() {
 	const navigate = useNavigate();
 	const { displayName, email, uid } = useAppSelector(state => state.activeUser);
 
+	
 	useEffect(() => {
 		if (displayName === null || email === null || uid === null) {
 			navigate('authorization', { replace: true });
