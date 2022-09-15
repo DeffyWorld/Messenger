@@ -19,8 +19,9 @@ export interface Theme {
 		lg: string,
 		md: string,
 		sm: string,
-		none: string,
-		exsm: string
+		xsm: string,
+		xxsm: string,
+		xxxsm: string
 	}
 }
 

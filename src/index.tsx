@@ -60,8 +60,9 @@ const theme: Theme = {
 		lg: "(max-width: 1200px)",
 		md: "(max-width: 992px)",
 		sm: "(max-width: 768px)",
-		none: "(max-width: 576px)",
-		exsm: "(max-width: 380px)"
+		xsm: "(max-width: 576px)",
+		xxsm: "(max-width: 460px)",
+		xxxsm: "(max-width: 380px)"
 	}
 }
 

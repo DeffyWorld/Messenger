@@ -36,6 +36,15 @@ const Form = styled.form`
     padding: 90px;
     width: 458px;
     position: relative;
+
+    @media (${({ theme }) => theme.media.xxsm}) {
+        padding: 0px;
+        margin: 70px;
+    }
+    @media (${({ theme }) => theme.media.xxxsm}) {
+        padding: 0px;
+        margin: 50px;
+    }
 `
 
 
@@ -104,9 +113,14 @@ const ShowPassword = styled.div<{ isHidden: boolean }>`
     position: absolute;
     right: 102px;
     margin-top: -28px;
+
     ${({ isHidden }) => isHidden && `
         display: none;
     `}
+
+    @media (${({ theme }) => theme.media.xxsm}) {
+        right: 12px;
+    }
 `;
 
 
@@ -172,13 +186,12 @@ const Line = styled.div`
 const СontinueWithGoogle = styled.div`
     width: 100%;
     height: 40px;
-    padding: 0px 40px;
     border: 1px solid ${({ theme }) => theme.colors.authorizationSecondary};
     border-radius: 7px;
     cursor: pointer;
 
     display: flex;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: center;
     transition: 250ms;
 
@@ -187,6 +200,7 @@ const СontinueWithGoogle = styled.div`
     }
 `;
 const СontinueWithGoogleText = styled.p`
+    padding-left: 5px;
     font-family: SFPro;
     font-weight: 400;
     font-size: 15px;
