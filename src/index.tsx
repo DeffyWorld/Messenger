@@ -2,9 +2,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { BrowserRouter as Router } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import store, { persistor } from './redux/store';
-import { PersistGate } from 'redux-persist/integration/react';
 import { Reset } from 'styled-reset';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Theme } from './types/theme';
@@ -47,7 +44,12 @@ const Global = createGlobalStyle`
 `
 const theme: Theme = {
 	colors: {
-		bgPrimary: '#FFFFFF',
+		authorizationBg: '#e7f6f8',
+		authorizationPrimary: '#BEEEE6',
+		authorizationSecondary: '#75c3b6',
+		authorizationInvalid: '#fba4a4',
+
+		disabled: '#b1b1b1',
 		bgSecondary: '#FAFAFA',
 		textPrimary: '#000000',
 		textSecondary: '#403A4B'
@@ -66,16 +68,12 @@ const theme: Theme = {
 
 root.render(
 	<React.StrictMode>
-		<Provider store={store}>
-			<PersistGate loading={null} persistor={persistor}>
-				<ThemeProvider theme={theme} >
-					<Router>
-						<Reset />
-						<Global />
-						<App />
-					</Router>
-				</ThemeProvider>
-			</PersistGate>
-		</Provider>
+		<ThemeProvider theme={theme} >
+			<Router>
+				<Reset />
+				<Global />
+				<App />
+			</Router>
+		</ThemeProvider>
 	</React.StrictMode>
 );

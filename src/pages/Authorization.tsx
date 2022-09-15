@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react'
 
-import { AuthorizationFormInputs } from '../types/global';
+import { AuthorizationFormInputs } from '../types/interfaces';
 import { IconContext } from 'react-icons';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { FcGoogle } from 'react-icons/fc';
 import styled from 'styled-components';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../redux/hooks';
-import { setUser } from '../redux/slices/userSlice';
-import { 
+import { useAuthState, useCreateUserWithEmailAndPassword, useSignInWithEmailAndPassword, useUpdateProfile } from 'react-firebase-hooks/auth';
+import {
     getAuth,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    updateProfile,
-    GoogleAuthProvider, 
+    GoogleAuthProvider,
     signInWithRedirect,
     getRedirectResult
 } from "firebase/auth";
@@ -31,7 +27,7 @@ import {
 const Wrapper = styled.div`
     width: 100vw;
     height: 100vh;
-    background-color: ${({theme}) => theme.colors.bgPrimary};
+    background-color: ${({ theme }) => theme.colors.authorizationBg};
     display: flex;
     justify-content: center;
     align-items: center;
@@ -48,11 +44,11 @@ const Tabs = styled.div`
     justify-content: space-evenly;
     margin-bottom: 40px;
 `
-const Tab = styled.h2<{isActive: boolean, params: any}>`
+const Tab = styled.h2<{ isActive: boolean, params: any }>`
     font-family: SFPro;
     font-weight: 700;
     font-size: 22px;
-    color: ${({theme}) => theme.colors.textPrimary};
+    color: ${({ theme }) => theme.colors.textPrimary};
     cursor: pointer;
     opacity: 0.2;
     transition: 250ms;
@@ -61,7 +57,7 @@ const Tab = styled.h2<{isActive: boolean, params: any}>`
         opacity: 1;
     }
 
-    ${({isActive}) => isActive && `
+    ${({ isActive }) => isActive && `
         opacity: 1;
         cursor: default
         &:hover {
@@ -71,12 +67,12 @@ const Tab = styled.h2<{isActive: boolean, params: any}>`
 `
 
 
-const Input = styled.input<{isValid: boolean, isHidden: boolean}>`
+const Input = styled.input<{ isValid: boolean, isHidden: boolean }>`
     width: 100%;
     height: 40px;
     padding: 0px 16px;
 
-    background: #F8F1FF;
+    background: ${({ theme }) => theme.colors.authorizationPrimary};
     border-radius: 7px;
     border: none;
 
@@ -84,41 +80,41 @@ const Input = styled.input<{isValid: boolean, isHidden: boolean}>`
     font-weight: 400;
     font-size: 13px;
     line-height: 14px;
-    color: ${({theme}) => theme.colors.textSecondary};
+    color: ${({ theme }) => theme.colors.textSecondary};
 
-    ${({isValid}) => !isValid && `
-        border: 2px solid #fec2c2;
+    ${({ isValid, theme }) => !isValid && `
+        border: 2px solid ${theme.colors.authorizationInvalid};
     `}
-    ${({isHidden}) => isHidden && `
+    ${({ isHidden }) => isHidden && `
         display: none;
     `}
 `
 const ErrorMessage = styled.div`
     margin-top: 1.5px;
     margin-bottom: 9px;
-    padding-left: 17px;
+    padding: 0px 5px 0px 10px;
 
     font-family: SFPro;
     font-weight: 400;
     font-size: 13px;
     line-height: 14px;
-    color: #fec2c2;
+    color: ${({ theme }) => theme.colors.authorizationInvalid};
 `
-const ShowPassword = styled.div<{isHidden: boolean}>`
+const ShowPassword = styled.div<{ isHidden: boolean }>`
     position: absolute;
     right: 102px;
     margin-top: -28px;
-    ${({isHidden}) => isHidden && `
+    ${({ isHidden }) => isHidden && `
         display: none;
     `}
 `;
 
 
-const Button = styled.div<{isValid: boolean}>`
+const Button = styled.div<{ isValid: boolean }>`
     margin-top: 40px;
     width: 100%;
     height: 40px;
-    background: #985ACE;
+    background: ${({ theme }) => theme.colors.authorizationSecondary};
     border-radius: 7px;
     cursor: pointer;
 
@@ -135,14 +131,14 @@ const Button = styled.div<{isValid: boolean}>`
     transition: 250ms;
 
     &:hover {
-        background: #bebebe;
-        color: ${({theme}) => theme.colors.textSecondary};
+        background: ${({ theme }) => theme.colors.authorizationPrimary};
+        color: ${({ theme }) => theme.colors.textSecondary};
     }
 
-    ${({isValid}) => isValid && `
-        background: #b1b1b1;
+    ${({ isValid, theme }) => isValid && `
+        background: ${theme.colors.disabled};
         &:hover {
-            background: #b1b1b1;
+            background: ${theme.colors.disabled};
             color: #FFFFFF;
             cursor: default;
         }
@@ -152,13 +148,13 @@ const Loader = styled.div`
     margin-bottom: 40px;
     width: 100%;
     height: 40px;
-    background: ${({theme}) => theme.colors.bgPrimary};
+    background: ${({ theme }) => theme.colors.authorizationBg};
     border-radius: 7px;
 
     display: flex;
     justify-content: center;
     align-items: center;
-    color: ${({theme}) => theme.colors.textPrimary};
+    color: ${({ theme }) => theme.colors.textPrimary};
     font-family: SFPro;
     font-weight: 500;
     font-size: 50px;
@@ -169,7 +165,7 @@ const Line = styled.div`
     margin-top: 20px;
     margin-bottom: 20px;
     width: 100%;
-    border-top: 0.5px solid ${({theme}) => theme.colors.textPrimary};
+    border-top: 0.5px solid ${({ theme }) => theme.colors.textPrimary};
 `;
 
 
@@ -177,22 +173,24 @@ const СontinueWithGoogle = styled.div`
     width: 100%;
     height: 40px;
     padding: 0px 40px;
-    border: 1px solid #985ACE;
+    border: 1px solid ${({ theme }) => theme.colors.authorizationSecondary};
     border-radius: 7px;
     cursor: pointer;
 
-    font-family: SFPro;
-    font-weight: 400;
-    font-size: 15px;
-    line-height: 14px;
     display: flex;
     justify-content: space-evenly;
     align-items: center;
     transition: 250ms;
 
     &:hover {
-        background: #F8F1FF;
+        background: ${({ theme }) => theme.colors.authorizationPrimary};
     }
+`;
+const СontinueWithGoogleText = styled.p`
+    font-family: SFPro;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 14px;
 `;
 
 
@@ -206,11 +204,12 @@ const СontinueWithGoogle = styled.div`
 
 export default function Authorization() {
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
     const auth = getAuth();
+    const [currentUser, currentUserLoading] = useAuthState(auth);
 
 
-    const [params, setParams] = useState('logIn');
+    const [params, setParams] = useState<string>(localStorage.getItem('params') || 'logIn');
+    localStorage.setItem('params', `${params}`);
     function changeParams() {
         params === 'logIn' ? setParams('signIn') : setParams('logIn');
     }
@@ -219,21 +218,21 @@ export default function Authorization() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [loader, setLoader] = useState<string>('.');
     useEffect(() => {
-        if(isLoading) {
+        if (isLoading) {
             setTimeout(() => {
                 loader === '.' && setLoader('..');
                 loader === '..' && setLoader('...');
                 loader === '...' && setLoader('.');
             }, 300);
         }
-    
+
     }, [isLoading, loader])
-    
+
 
 
     const {
         register,
-        formState: {errors, dirtyFields},
+        formState: { errors, dirtyFields },
         handleSubmit,
         watch,
         setError
@@ -251,64 +250,58 @@ export default function Authorization() {
         event.code === 'Enter' && handleSubmit(onSubmit)();
     }
 
+
+    const [signInWithEmailAndPassword, , logInLoading, logInError,] = useSignInWithEmailAndPassword(auth);
+    const [createUserWithEmailAndPassword, , signInLoading, signInError] = useCreateUserWithEmailAndPassword(auth);
+    const [updateProfile] = useUpdateProfile(auth);
+
     function onSubmit(data: AuthorizationFormInputs): void {
         setIsLoading(true);
         if (params === 'logIn') {
-            signInWithEmailAndPassword(auth, data.email, data.password)
+            signInWithEmailAndPassword(data.email, data.password)
                 .then(() => {
-                    dispatch(setUser({
-                        displayName: auth.currentUser?.displayName!,
-                        email: auth.currentUser?.email!,
-                        uid: auth.currentUser?.uid!
-                    }));
                     setIsLoading(false);
-                    navigate('/', { replace: true });
                 })
-                .catch(error => {
-                    console.log(error.message);
-                });
         } else {
-            createUserWithEmailAndPassword(auth, data.email, data.password)
+            createUserWithEmailAndPassword(data.email, data.password)
                 .then(() => {
-                    updateProfile(auth.currentUser!, {
-                        displayName: `${data.name} ${data.surname}`
-                    }).then(() => {
-                        dispatch(setUser({
-                            displayName: auth.currentUser?.displayName!,
-                            email: auth.currentUser?.email!,
-                            uid: auth.currentUser?.uid!
-                        }));
-                        setIsLoading(false);
-                        navigate('/', { replace: true });
-                    })
+                    updateProfile({ displayName: `${data.name} ${data.surname}` });
+                    setIsLoading(false);
                 })
-                .catch(error => {
-                    console.log(error.message);
-                    error.message === 'Firebase: Error (auth/email-already-in-use).' 
-                        && setError('email', {type: 'custom', message: 'User with this email already exists'});
-                });
-        }        
+        }
     }
+    useEffect(() => {
+        logInError?.code === 'auth/user-not-found'
+            && setError('email', { type: 'custom', message: 'User not found' });
+        logInError?.code === 'auth/wrong-password'
+            && setError('password', { type: 'custom', message: 'Wrong password' });
 
+        signInError?.code === 'auth/email-already-in-use'
+            && setError('email', { type: 'custom', message: 'User with this email already exists' });
+
+    }, [logInError?.code, signInError?.code, setError])
+
+    useEffect(() => {
+        if (!currentUserLoading && !logInLoading && !signInLoading && currentUser !== null) {
+            navigate('/', { replace: true });
+        }
+
+    }, [currentUser, currentUserLoading, logInLoading, signInLoading, navigate, logInError])
+
+    const [isRedirectResultNeeded, setIsRedirectResultNeeded] = useState<boolean>(false);
     function AuthorizationWithGoogle() {
+        setIsRedirectResultNeeded(true);
         const provider = new GoogleAuthProvider();
         signInWithRedirect(auth, provider);
     }
-
     useEffect(() => {
-        getRedirectResult(auth)
+        isRedirectResultNeeded && getRedirectResult(auth)
             .then(() => {
-                dispatch(setUser({
-                    displayName: auth.currentUser?.displayName!,
-                    email: auth.currentUser?.email!,
-                    uid: auth.currentUser?.uid!
-                }));
-                navigate('/', { replace: true });
+                setIsRedirectResultNeeded(false);
             })
-    
-      
-    }, [auth, dispatch, navigate])
-    
+
+    }, [isRedirectResultNeeded, auth, navigate])
+
 
 
     return (
@@ -415,10 +408,10 @@ export default function Authorization() {
                     isHidden={false}
                 />
                 <ShowPassword onClick={changeInputType} isHidden={inputType === 'password'}>
-                    <AiOutlineEye/>
+                    <AiOutlineEye />
                 </ShowPassword>
                 <ShowPassword onClick={changeInputType} isHidden={inputType === 'text'}>
-                    <AiOutlineEyeInvisible/>
+                    <AiOutlineEyeInvisible />
                 </ShowPassword>
                 <ErrorMessage>{errors?.password && errors?.password?.message}</ErrorMessage>
 
@@ -445,10 +438,10 @@ export default function Authorization() {
                     isHidden={params === 'logIn' ? true : false}
                 />
                 <ShowPassword onClick={changeInputType} isHidden={params === 'logIn' || inputType === 'password'}>
-                    <AiOutlineEye/>
+                    <AiOutlineEye />
                 </ShowPassword>
                 <ShowPassword onClick={changeInputType} isHidden={params === 'logIn' || inputType === 'text'}>
-                    <AiOutlineEyeInvisible/>
+                    <AiOutlineEyeInvisible />
                 </ShowPassword>
                 <ErrorMessage>{errors?.passwordConfirm && errors?.passwordConfirm?.message}</ErrorMessage>
 
@@ -459,20 +452,20 @@ export default function Authorization() {
                         onClick={handleSubmit(onSubmit)}
                         isValid={
                             params === 'logIn'
-                                ?   errors.email !== undefined ||
-                                    dirtyFields.email !== true ||
-                                    errors.password !== undefined ||
-                                    dirtyFields.password !== true 
-                                :   errors.name !== undefined ||
-                                    dirtyFields.name !== true ||
-                                    errors.surname !== undefined ||
-                                    dirtyFields.surname !== true ||
-                                    errors.email !== undefined ||
-                                    dirtyFields.email !== true ||
-                                    errors.password !== undefined ||
-                                    dirtyFields.password !== true ||
-                                    errors.passwordConfirm !== undefined ||
-                                    dirtyFields.passwordConfirm !== true 
+                                ? errors.email !== undefined ||
+                                dirtyFields.email !== true ||
+                                errors.password !== undefined ||
+                                dirtyFields.password !== true
+                                : errors.name !== undefined ||
+                                dirtyFields.name !== true ||
+                                errors.surname !== undefined ||
+                                dirtyFields.surname !== true ||
+                                errors.email !== undefined ||
+                                dirtyFields.email !== true ||
+                                errors.password !== undefined ||
+                                dirtyFields.password !== true ||
+                                errors.passwordConfirm !== undefined ||
+                                dirtyFields.passwordConfirm !== true
                         }
                     >
                         {params === 'logIn' ? 'Login' : 'Register'}
@@ -485,7 +478,7 @@ export default function Authorization() {
 
 
 
-                <Line/>
+                <Line />
 
 
 
@@ -495,7 +488,9 @@ export default function Authorization() {
                             <FcGoogle />
                         </div>
                     </IconContext.Provider>
-                    Сontinue with Google
+                    <СontinueWithGoogleText>
+                        Сontinue with Google
+                    </СontinueWithGoogleText>
                 </СontinueWithGoogle>
             </Form>
         </Wrapper>

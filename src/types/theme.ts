@@ -2,7 +2,12 @@ import 'styled-components';
 
 export interface Theme {
     colors: {
-		bgPrimary: string,
+		authorizationBg: string,
+		authorizationPrimary: string,
+		authorizationSecondary: string,
+		authorizationInvalid: string,
+
+		disabled: string,
 		bgSecondary: string,
 		textPrimary: string,
 		textSecondary: string
