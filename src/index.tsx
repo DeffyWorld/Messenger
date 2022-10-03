@@ -1,6 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import store, { persistor } from './redux/store';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Reset } from 'styled-reset';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
@@ -69,12 +72,16 @@ const theme: Theme = {
 
 root.render(
 	<React.StrictMode>
-		<ThemeProvider theme={theme} >
-			<Router>
-				<Reset />
-				<Global />
-				<App />
-			</Router>
-		</ThemeProvider>
+		<Provider store={store}>
+			<PersistGate loading={null} persistor={persistor}>
+				<ThemeProvider theme={theme} >
+					<Router>
+						<Reset />
+						<Global />
+						<App />
+					</Router>
+				</ThemeProvider>
+			</PersistGate>
+		</Provider>
 	</React.StrictMode>
 );

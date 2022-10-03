@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react'
 
-import { AuthorizationFormInputs } from '../types/interfaces';
+import styled from 'styled-components';
 import { IconContext } from 'react-icons';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { FcGoogle } from 'react-icons/fc';
-import styled from 'styled-components';
+
+import { AuthorizationFormInputs } from '../types/interfaces';
+
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuthState, useCreateUserWithEmailAndPassword, useSignInWithEmailAndPassword, useUpdateProfile } from 'react-firebase-hooks/auth';
-import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithRedirect,
-    getRedirectResult
-} from "firebase/auth";
+import { getAuth, getRedirectResult, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { useAppDispatch } from '../redux/hooks';
+import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
 
 
 
@@ -48,6 +49,7 @@ const Form = styled.form`
 `
 
 
+
 const Tabs = styled.div`
     display: flex;
     justify-content: space-evenly;
@@ -74,6 +76,7 @@ const Tab = styled.h2<{ isActive: boolean, params: any }>`
         }
     `}
 `
+
 
 
 const Input = styled.input<{ isValid: boolean, isHidden: boolean }>`
@@ -122,6 +125,7 @@ const ShowPassword = styled.div<{ isHidden: boolean }>`
         right: 12px;
     }
 `;
+
 
 
 const Button = styled.div<{ isValid: boolean }>`
@@ -173,16 +177,12 @@ const Loader = styled.div`
     font-weight: 500;
     font-size: 50px;
 `;
-
-
 const Line = styled.div`
     margin-top: 20px;
     margin-bottom: 20px;
     width: 100%;
     border-top: 0.5px solid ${({ theme }) => theme.colors.textPrimary};
 `;
-
-
 const СontinueWithGoogle = styled.div`
     width: 100%;
     height: 40px;
@@ -217,10 +217,7 @@ const СontinueWithGoogleText = styled.p`
 
 
 export default function Authorization() {
-    const navigate = useNavigate();
-    const auth = getAuth();
-    const [currentUser, currentUserLoading] = useAuthState(auth);
-
+    // Tabs
 
     const [params, setParams] = useState<string>(localStorage.getItem('params') || 'logIn');
     localStorage.setItem('params', `${params}`);
@@ -229,20 +226,31 @@ export default function Authorization() {
     }
 
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [loader, setLoader] = useState<string>('.');
+
+
+
+    // Loading
+
+    const [isLoading, setIsLoading] = useState<boolean>(localStorage.getItem('isLoading') === 'true' ? true : false);
+    localStorage.setItem('isLoading', `${isLoading}`);
+
+    const [loader, setLoader] = useState<string>(localStorage.getItem('loader') || '.');
+    localStorage.setItem('loader', `${loader}`);
+
     useEffect(() => {
-        if (isLoading) {
-            setTimeout(() => {
-                loader === '.' && setLoader('..');
-                loader === '..' && setLoader('...');
-                loader === '...' && setLoader('.');
-            }, 300);
-        }
+        isLoading && setTimeout(() => {
+            loader === '.' && setLoader('..');
+            loader === '..' && setLoader('...');
+            loader === '...' && setLoader('.');
+        }, 300);
 
     }, [isLoading, loader])
 
 
+
+
+
+    // Form 
 
     const {
         register,
@@ -254,20 +262,30 @@ export default function Authorization() {
         mode: "all"
     });
 
+
+
     const currentPassword = watch('password');
     const [inputType, setInputType] = useState('password');
+
     function changeInputType() {
         inputType === 'password' ? setInputType('text') : setInputType('password');
     }
-
     function enterClickHandler(event: React.KeyboardEvent) {
         event.code === 'Enter' && handleSubmit(onSubmit)();
     }
 
 
+
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const auth = getAuth();
+    const [currentUser, currentUserLoading] = useAuthState(auth);
+
     const [signInWithEmailAndPassword, , logInLoading, logInError,] = useSignInWithEmailAndPassword(auth);
-    const [createUserWithEmailAndPassword, , signInLoading, signInError] = useCreateUserWithEmailAndPassword(auth);
+    const [createUserWithEmailAndPassword, signedInUser, signInLoading, signInError] = useCreateUserWithEmailAndPassword(auth);
     const [updateProfile] = useUpdateProfile(auth);
+
+
 
     function onSubmit(data: AuthorizationFormInputs): void {
         setIsLoading(true);
@@ -279,11 +297,15 @@ export default function Authorization() {
         } else {
             createUserWithEmailAndPassword(data.email, data.password)
                 .then(() => {
-                    updateProfile({ displayName: `${data.name} ${data.surname}` });
+                    updateProfile({ displayName: `${data.name} ${data.surname}` })
+                })
+                .then(() => {
+                    dispatch(setShouldSetNewDoc(true));
                     setIsLoading(false);
                 })
         }
     }
+
     useEffect(() => {
         logInError?.code === 'auth/user-not-found'
             && setError('email', { type: 'custom', message: 'User not found' });
@@ -295,27 +317,43 @@ export default function Authorization() {
 
     }, [logInError?.code, signInError?.code, setError])
 
-    useEffect(() => {
-        if (!currentUserLoading && !logInLoading && !signInLoading && currentUser !== null) {
-            navigate('/', { replace: true });
-        }
 
-    }, [currentUser, currentUserLoading, logInLoading, signInLoading, navigate, logInError])
 
-    const [isRedirectResultNeeded, setIsRedirectResultNeeded] = useState<boolean>(false);
     function AuthorizationWithGoogle() {
-        setIsRedirectResultNeeded(true);
+        setIsLoading(true);
+        localStorage.setItem('isRedirectResultNeeded', 'true');
+        dispatch(setShouldSetNewDoc(true));
+
         const provider = new GoogleAuthProvider();
         signInWithRedirect(auth, provider);
     }
+
     useEffect(() => {
-        isRedirectResultNeeded && getRedirectResult(auth)
-            .then(() => {
-                setIsRedirectResultNeeded(false);
+        localStorage.getItem('isRedirectResultNeeded') === 'true' && getRedirectResult(auth)
+            .then(result => {
+                return getDoc(doc(db, 'users', `${result?.user.email}`));
+            })
+            .then(docSnap => {
+                !docSnap.exists() && dispatch(setShouldSetNewDoc(true));
+                setIsLoading(false);
+                localStorage.setItem('isRedirectResultNeeded', 'false');
             })
 
-    }, [isRedirectResultNeeded, auth, navigate])
+    }, [auth, dispatch])
 
+
+
+
+
+    useEffect(() => {
+        if (!isLoading && !currentUserLoading && !logInLoading && !signInLoading && currentUser !== null) {
+            navigate('/', { replace: true });
+        }
+
+    }, [currentUser, currentUserLoading, logInLoading, signInLoading, navigate, logInError, signedInUser, isLoading])
+
+
+    
 
 
     return (

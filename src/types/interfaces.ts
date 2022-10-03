@@ -1,3 +1,9 @@
+export interface ShouldSetNewDocState {
+	shouldSetNewDoc: boolean
+}
+
+
+
 export interface AuthorizationFormInputs {
 	name: string,
 	surname: string,
@@ -8,11 +14,6 @@ export interface AuthorizationFormInputs {
 
 
 
-export interface ChatFields {
-	members: MemberFields[],
-	messages: MessageFields[],
-	uid: string[]
-}
 export interface MemberFields {
 	displayName: string,
 	photo: string,
@@ -20,8 +21,9 @@ export interface MemberFields {
 }
 export interface MessageFields {
 	content: string,
-	from: string,
 	time: number,
-	photo: string,
-	type: string
+	from: string,
+	type: string,
+	displayName?: string,
+	photoURL?: string
 }
