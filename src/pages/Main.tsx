@@ -1,8 +1,11 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 
 import styled from 'styled-components';
+import { BsChevronUp, BsChevronDown } from 'react-icons/bs';
+
 import { EnumSortParams } from '../types/enums';
 import { MemberFields } from '../types/interfaces';
+
 import { db } from '../firebase';
 import { collection, doc, query, setDoc, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -13,6 +16,7 @@ import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
 
 import Chat from '../components/Chat';
 import FakeSearchPanel from '../components/FakeSearchPanel';
+import { IconContext } from 'react-icons';
 
 const SearchPanel = lazy(() => import('../components/SearchPanel'));
 
@@ -55,16 +59,40 @@ const Title = styled.h1`
 
 
 const SortBy = styled.div`
-    margin-top: 60px; 
+    margin-top: 66px; 
+    margin-left: 13px;
+    gap: 4px;
+    display: flex;
 `;
 const SortByText = styled.p`
-  
+    font-family: 'SFPro';
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 16px;
+    color: ${({ theme }) => theme.colors.textSecondary};
 `;
-const Dropdown = styled.div`
-  
+const DropdownWrapper = styled.div`
+    position: relative;
+`;
+const Dropdown = styled.div<{ isDropdownActive: boolean }>`
+    display: none;
+
+    ${({ isDropdownActive }) => isDropdownActive && `
+        position: absolute;
+        display: block;
+    `}
 `;
 const SortByParam = styled.div`
-  
+    font-family: 'SFPro';
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+    color: #2D9CDB;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
 `;
 
 
@@ -108,10 +136,15 @@ export default function Main() {
     // SortBy
 
     const sortParams = Object.keys(EnumSortParams);
-    const [sortBy, setSortBy] = useState<string>(EnumSortParams.Newest)
+    const [isDropdownActive, setIsDropdownActive] = useState<boolean>(false);
+    const [sortBy, setSortBy] = useState<string>(EnumSortParams.Newest);
 
-    const sortByHandler = (param: string) => {
+    const toggleDropdown = () => {
+        setIsDropdownActive(!isDropdownActive);
+    }
+    const toggleSortByParam = (param: string) => {
         setSortBy(param);
+        setIsDropdownActive(false);
     }
 
 
@@ -130,8 +163,8 @@ export default function Main() {
             let secondValueName: string = '';
             firstValue.members.forEach((member: MemberFields) => {
                 if (member.displayName !== currentUser?.displayName && member.displayName !== 'user') {
-                    firstValueName = member.displayName.split(' ')[0].toLowerCase();
-                    secondValueName = member.displayName.split(' ')[0].toLowerCase();
+                    // firstValueName = member.displayName.split(' ')[0].toLowerCase();
+                    // secondValueName = member.displayName.split(' ')[0].toLowerCase();
                 }
             })
             return firstValueName < secondValueName ? -1 : 1;
@@ -154,26 +187,38 @@ export default function Main() {
                     <Title onClick={() => auth.signOut()} >Messeges</Title>
 
 
-                    {shouldSearchPanelRender 
-                        ? (<Suspense fallback={<FakeSearchPanel/>}>
-                            <SearchPanel/>
-                          </Suspense>)
-                        : (<FakeSearchPanel/>)
+                    {shouldSearchPanelRender
+                        ? (<Suspense fallback={<FakeSearchPanel />}>
+                            <SearchPanel />
+                        </Suspense>)
+                        : (<FakeSearchPanel />)
                     }
 
 
                     <SortBy>
-                        <SortByText>SortBy</SortByText>
-                        <Dropdown>
-                            <SortByParam>{sortBy}</SortByParam>
-                            {sortParams.map((param, index) => (
-                                param !== sortBy && (
-                                    <SortByParam key={`${param}_${index}`} onClick={() => sortByHandler(param)}>
-                                        {param}
-                                    </SortByParam>
-                                )
-                            ))}
-                        </Dropdown>
+                        <SortByText>Sort by</SortByText>
+
+                        <DropdownWrapper>
+                            <SortByParam onClick={toggleDropdown} >
+                                {sortBy}
+                                <IconContext.Provider value={{ size: '0.66rem', style: {margin: '2.5px 0 0 0'} }}>
+                                    {isDropdownActive
+                                        ? (<BsChevronUp />)
+                                        : (<BsChevronDown />)
+                                    }
+                                </IconContext.Provider>
+                            </SortByParam>
+
+                            <Dropdown isDropdownActive={isDropdownActive} >
+                                {sortParams.map((param, index) => (
+                                    param !== sortBy && (
+                                        <SortByParam key={`${param}_${index}`} onClick={() => toggleSortByParam(param)}>
+                                            {param}
+                                        </SortByParam>
+                                    )
+                                ))}
+                            </Dropdown>
+                        </DropdownWrapper>
                     </SortBy>
                 </MainHeader>
 

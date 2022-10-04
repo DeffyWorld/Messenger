@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { useRef } from 'react'
 
 import styled from 'styled-components';
-import { AiOutlineSearch } from 'react-icons/ai';
-import { useAppDispatch } from '../redux/hooks';
-import { setShouldSearchPanelRender } from '../redux/slices/searchPanelSlice';
+import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setSearchValue, setShouldSearchPanelRender } from '../redux/slices/searchPanelSlice';
 
 
 
@@ -53,7 +53,16 @@ const Input = styled.input`
 
 export default function FakeSearchPanel() {
     const dispatch = useAppDispatch();
+    const { searchValue } = useAppSelector(state => state.searchPanel);
+    const inputRef = useRef<HTMLInputElement>(null!);
 
+    const searchInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+        dispatch(setSearchValue(event.target.value));
+    }
+    const hideSearchResult = () => {
+        dispatch(setSearchValue(''));
+        inputRef.current.blur();
+    }
     const onFakeSearchPanelClick = () => {
         dispatch(setShouldSearchPanelRender());
     }
@@ -63,7 +72,8 @@ export default function FakeSearchPanel() {
         <SearchWrapper onClick={onFakeSearchPanelClick} >
             <Label>
                 <AiOutlineSearch />
-                <Input placeholder='Search' />
+                <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} ref={inputRef} />
+                <AiOutlineClose style={{ display: searchValue === '' ? 'none' : 'block' }} onClick={hideSearchResult} />
             </Label>
         </SearchWrapper>
     )
