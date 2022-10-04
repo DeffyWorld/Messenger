@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { memo, useEffect, useMemo, useRef } from 'react'
 
 import styled from 'styled-components';
 import { MessageFields } from '../types/interfaces';
@@ -7,7 +7,7 @@ import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setSearchValue } from '../redux/slices/searchPanelSlice';
 import { collection, DocumentData, query, where } from 'firebase/firestore'
-import { useCollectionData, useCollectionDataOnce } from 'react-firebase-hooks/firestore';
+import { useCollectionDataOnce } from 'react-firebase-hooks/firestore';
 import { db } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { getAuth } from 'firebase/auth';
@@ -81,7 +81,11 @@ const FoundMessagesAmount = styled.div`
 
 
 
-export default function SearchPanel() {
+interface Props {
+    chatsCollection: DocumentData[] | undefined,
+    membersExludeUser: string[]
+}
+function SearchPanel({ chatsCollection, membersExludeUser }: Props) {
     const dispatch = useAppDispatch();
     const { searchValue } = useAppSelector(state => state.searchPanel);
     const inputRef = useRef<HTMLInputElement>(null!);
@@ -104,24 +108,7 @@ export default function SearchPanel() {
     const auth = getAuth();
     const [currentUser] = useAuthState(auth);
 
-    const [chatsCollection] = useCollectionData(
-        query(collection(db, 'chats'), where('members', 'array-contains-any', currentUser === null ? ['user'] : ['user', currentUser?.email!]))
-    );
 
-
-
-    const membersExludeUser = useMemo(() => {
-        let returnArr: string[] = [''];
-        chatsCollection?.forEach((chat) => {
-            chat.members.forEach((member: string) => {
-                if (member !== 'user' && member !== currentUser?.email) {
-                    returnArr = [...returnArr, member];
-                }
-            })
-        })
-        return returnArr;
-
-    }, [chatsCollection, currentUser?.email])
 
     const [foundChatsCollection] = useCollectionDataOnce(
         query(collection(db, 'users'), where('email', 'in', membersExludeUser))
@@ -228,3 +215,5 @@ export default function SearchPanel() {
         </SearchWrapper>
     )
 }
+
+export default memo(SearchPanel);

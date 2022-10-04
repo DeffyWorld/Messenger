@@ -1,7 +1,8 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 
 import styled from 'styled-components';
-import { BsChevronUp, BsChevronDown } from 'react-icons/bs';
+import { IconContext } from 'react-icons';
+import { BiChevronUp, BiChevronDown } from 'react-icons/bi';
 
 import { EnumSortParams } from '../types/enums';
 import { MemberFields } from '../types/interfaces';
@@ -16,7 +17,6 @@ import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
 
 import Chat from '../components/Chat';
 import FakeSearchPanel from '../components/FakeSearchPanel';
-import { IconContext } from 'react-icons';
 
 const SearchPanel = lazy(() => import('../components/SearchPanel'));
 
@@ -92,7 +92,6 @@ const SortByParam = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
 `;
 
 
@@ -139,6 +138,9 @@ export default function Main() {
     const [isDropdownActive, setIsDropdownActive] = useState<boolean>(false);
     const [sortBy, setSortBy] = useState<string>(EnumSortParams.Newest);
 
+    const onRootElClick = () => {
+        isDropdownActive === true && setIsDropdownActive(false);
+    }
     const toggleDropdown = () => {
         setIsDropdownActive(!isDropdownActive);
     }
@@ -156,6 +158,19 @@ export default function Main() {
     const [chatsCollection, chatsCollectionLoading] = useCollectionData(
         query(collection(db, 'chats'), where('members', 'array-contains-any', currentUser === null ? ['user'] : ['user', currentUser?.email!]))
     );
+
+    const membersExludeUser = useMemo(() => {
+        let returnArr: string[] = [''];
+        chatsCollection?.forEach((chat) => {
+            chat.members.forEach((member: string) => {
+                if (member !== 'user' && member !== currentUser?.email) {
+                    returnArr = [...returnArr, member];
+                }
+            })
+        })
+        return returnArr;
+
+    }, [chatsCollection, currentUser?.email])
 
     const sortedChats = useMemo(() => chatsCollection?.sort((firstValue, secondValue) => {
         if (sortBy === EnumSortParams.Alphabet) {
@@ -182,14 +197,14 @@ export default function Main() {
 
     return (
         !currentUserLoading && !chatsCollectionLoading ?
-            (<MainWrapper>
+            (<MainWrapper onClick={onRootElClick} >
                 <MainHeader>
                     <Title onClick={() => auth.signOut()} >Messeges</Title>
 
 
                     {shouldSearchPanelRender
                         ? (<Suspense fallback={<FakeSearchPanel />}>
-                            <SearchPanel />
+                            <SearchPanel chatsCollection={chatsCollection} membersExludeUser={membersExludeUser} />
                         </Suspense>)
                         : (<FakeSearchPanel />)
                     }
@@ -201,10 +216,10 @@ export default function Main() {
                         <DropdownWrapper>
                             <SortByParam onClick={toggleDropdown} >
                                 {sortBy}
-                                <IconContext.Provider value={{ size: '0.66rem', style: {margin: '2.5px 0 0 0'} }}>
+                                <IconContext.Provider value={{ style: {margin: '2px 0 0 0'} }}>
                                     {isDropdownActive
-                                        ? (<BsChevronUp />)
-                                        : (<BsChevronDown />)
+                                        ? (<BiChevronUp />)
+                                        : (<BiChevronDown />)
                                     }
                                 </IconContext.Provider>
                             </SortByParam>
