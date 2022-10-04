@@ -2,6 +2,11 @@ export interface ShouldSetNewDocState {
 	shouldSetNewDoc: boolean
 }
 
+export interface SearchPanelState {
+	searchValue: string,
+	shouldSearchPanelRender: boolean
+}
+
 
 
 export interface AuthorizationFormInputs {

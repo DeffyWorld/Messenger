@@ -12,11 +12,13 @@ import {
 import storage from 'redux-persist/lib/storage';
 
 import { shouldSetNewDocSlice } from "./slices/shouldSetNewDocSlice";
+import { searchPanelSlice } from "./slices/searchPanelSlice";
 
 
 
 const rootReducer = combineReducers({
-    shouldSetNewDoc: shouldSetNewDocSlice.reducer
+    shouldSetNewDoc: shouldSetNewDocSlice.reducer,
+    searchPanel: searchPanelSlice.reducer
 });
 const persistConfig = {
     key: 'root',

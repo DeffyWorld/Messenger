@@ -1,9 +1,11 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 
 import styled from 'styled-components';
 import { MessageFields } from '../types/interfaces';
 
 import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setSearchValue } from '../redux/slices/searchPanelSlice';
 import { collection, DocumentData, query, where } from 'firebase/firestore'
 import { useCollectionData, useCollectionDataOnce } from 'react-firebase-hooks/firestore';
 import { db } from '../firebase';
@@ -80,14 +82,18 @@ const FoundMessagesAmount = styled.div`
 
 
 export default function SearchPanel() {
-    const [inputValue, setInputValue] = useState<string>('');
+    const dispatch = useAppDispatch();
+    const { searchValue } = useAppSelector(state => state.searchPanel);
     const inputRef = useRef<HTMLInputElement>(null!);
 
     const searchInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setInputValue(event.target.value);
+        dispatch(setSearchValue(event.target.value));
     }
+    useEffect(() => {
+        inputRef.current.focus();
+    }, [])
     const hideSearchResult = () => {
-        setInputValue('');
+        dispatch(setSearchValue(''));
         inputRef.current.blur();
     }
 
@@ -124,13 +130,13 @@ export default function SearchPanel() {
     const foundChats = useMemo(() => {
         let returnArr: DocumentData[] = [];
         foundChatsCollection?.forEach(member => {
-            if (member.displayName.toLocaleLowerCase().includes(inputValue.toLowerCase())) {
+            if (member.displayName.toLocaleLowerCase().includes(searchValue.toLowerCase())) {
                 returnArr = [...returnArr, member];
             }
         })
         return returnArr;
 
-    }, [inputValue, foundChatsCollection])
+    }, [searchValue, foundChatsCollection])
 
 
 
@@ -138,14 +144,14 @@ export default function SearchPanel() {
         let returnArr: MessageFields[] = [];
         chatsCollection?.forEach(chat => {
             chat.messages.forEach((message: MessageFields) => {
-                if (message.type === 'text' && message.content.toLocaleLowerCase().includes(inputValue.toLowerCase())) {
+                if (message.type === 'text' && message.content.toLocaleLowerCase().includes(searchValue.toLowerCase())) {
                     returnArr = [...returnArr, message];
                 }
             })
         })
         return returnArr;
 
-    }, [chatsCollection, inputValue])
+    }, [chatsCollection, searchValue])
 
     const foundMessagesFrom = useMemo(() => {
         let returnArr: string[] = [''];
@@ -190,11 +196,11 @@ export default function SearchPanel() {
         <SearchWrapper>
             <Label>
                 <AiOutlineSearch />
-                <Input placeholder='Search' value={inputValue} onChange={searchInputHandler} ref={inputRef} />
-                <AiOutlineClose style={{ display: inputValue === '' ? 'none' : 'block' }} onClick={hideSearchResult} />
+                <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} ref={inputRef} />
+                <AiOutlineClose style={{ display: searchValue === '' ? 'none' : 'block' }} onClick={hideSearchResult} />
             </Label>
 
-            {inputValue !== '' &&
+            {searchValue !== '' &&
                 <SearchResults>
                     {foundChats.map((chat, index) => (
                         <FoundItem

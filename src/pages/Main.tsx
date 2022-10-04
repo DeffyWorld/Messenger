@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 
 import styled from 'styled-components';
 import { EnumSortParams } from '../types/enums';
@@ -11,8 +11,10 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
 
-import SearchPanel from '../components/SearchPanel';
 import Chat from '../components/Chat';
+import FakeSearchPanel from '../components/FakeSearchPanel';
+
+const SearchPanel = lazy(() => import('../components/SearchPanel'));
 
 
 
@@ -78,6 +80,8 @@ const SortByParam = styled.div`
 export default function Main() {
     const dispatch = useAppDispatch();
     const { shouldSetNewDoc } = useAppSelector(state => state.shouldSetNewDoc);
+    const { shouldSearchPanelRender } = useAppSelector(state => state.searchPanel);
+
     const auth = getAuth();
     const [currentUser, currentUserLoading] = useAuthState(auth);
 
@@ -96,7 +100,7 @@ export default function Main() {
         }
 
     }, [currentUser?.displayName, currentUser?.email, currentUser?.photoURL, currentUser?.uid, currentUserLoading, dispatch, shouldSetNewDoc])
-    
+
 
 
 
@@ -150,7 +154,12 @@ export default function Main() {
                     <Title onClick={() => auth.signOut()} >Messeges</Title>
 
 
-                    <SearchPanel/>
+                    {shouldSearchPanelRender 
+                        ? (<Suspense fallback={<FakeSearchPanel/>}>
+                            <SearchPanel/>
+                          </Suspense>)
+                        : (<FakeSearchPanel/>)
+                    }
 
 
                     <SortBy>
@@ -176,7 +185,7 @@ export default function Main() {
                     ))}
                 </ChatsWrapper>
             </MainWrapper>)
-        :
+            :
             (<MainLoaderWrapper>
                 Loading
             </MainLoaderWrapper>)
