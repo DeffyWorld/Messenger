@@ -83,9 +83,9 @@ const FoundMessagesAmount = styled.div`
 
 interface Props {
     chatsCollection: DocumentData[] | undefined,
-    membersExludeUser: string[]
+    membersDataCollection: DocumentData[] | undefined
 }
-function SearchPanel({ chatsCollection, membersExludeUser }: Props) {
+function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
     const dispatch = useAppDispatch();
     const { searchValue } = useAppSelector(state => state.searchPanel);
     const inputRef = useRef<HTMLInputElement>(null!);
@@ -110,20 +110,16 @@ function SearchPanel({ chatsCollection, membersExludeUser }: Props) {
 
 
 
-    const [foundChatsCollection] = useCollectionDataOnce(
-        query(collection(db, 'users'), where('email', 'in', membersExludeUser))
-    );
-
     const foundChats = useMemo(() => {
         let returnArr: DocumentData[] = [];
-        foundChatsCollection?.forEach(member => {
+        membersDataCollection?.forEach(member => {
             if (member.displayName.toLocaleLowerCase().includes(searchValue.toLowerCase())) {
                 returnArr = [...returnArr, member];
             }
         })
         return returnArr;
 
-    }, [searchValue, foundChatsCollection])
+    }, [searchValue, membersDataCollection])
 
 
 

@@ -55,7 +55,9 @@ const theme: Theme = {
 		disabled: '#b1b1b1',
 		bgSecondary: '#FAFAFA',
 		textPrimary: '#000000',
-		textSecondary: '#403A4B'
+		textSecondary: '#403A4B',
+		
+		highlited: '#27AE60'
 	},
 	media: {
 		xxl: "(min-width: 1401px)",

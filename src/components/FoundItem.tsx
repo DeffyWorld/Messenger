@@ -13,16 +13,16 @@ import styled from 'styled-components';
 
 const Wrapper = styled.div`
     padding: 4px 0px;
-    display: grid;
     gap: 15px;
-    grid-template-columns: 50px 1fr 1fr;
+    display: grid;
+    grid-template-columns: 40px auto auto;
 `;
 
 
 
 const Photo = styled.div<{ photoURL: string }>`
-    height: 50px;
-    width: 50px;
+    width: 40px;
+    height: 40px;
     margin-left: 8px;
 
     background-image: url(${({ photoURL }) => photoURL});
@@ -34,30 +34,32 @@ const Photo = styled.div<{ photoURL: string }>`
 `;
 
 const TextWrapper = styled.div`
-    padding: 5px 0px;
+    padding: 2px 0px;
 
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
+    overflow: hidden;
 `;
 const DisplayName = styled.div`
-    width: 130px;
     font-family: SFPro;
     font-style: normal;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
+    color: ${({ theme }) => theme.colors.textPrimary};
 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 `;
 const Text = styled.div`
-    width: 130px;
     font-family: SFPro;
     font-style: normal;
     font-weight: 400;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 16px;
+    color: ${({ theme }) => theme.colors.textSecondary};
 
     white-space: nowrap;
     overflow: hidden;
@@ -69,7 +71,7 @@ const Time = styled.div`
     font-family: SFPro;
     font-style: normal;
     font-weight: 400;
-    font-size: 14px;
+    font-size: 13px;
     text-align: right;
 `;
 

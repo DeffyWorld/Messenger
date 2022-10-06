@@ -10,7 +10,9 @@ export interface Theme {
 		disabled: string,
 		bgSecondary: string,
 		textPrimary: string,
-		textSecondary: string
+		textSecondary: string,
+		
+		highlited: string
 	}
     
 	media: {

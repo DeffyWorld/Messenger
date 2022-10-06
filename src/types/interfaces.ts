@@ -19,16 +19,26 @@ export interface AuthorizationFormInputs {
 
 
 
+export interface ChatFields {
+	id: number,
+	messages: MessageFields[],
+	members?: string[],
+	membersData?: MemberFields[]
+}
 export interface MemberFields {
 	displayName: string,
 	photo: string,
-	uid: string 
+	uid: string,
+	isTyping?: boolean,
+	wasOnline?: number,
+	email?: string
 }
 export interface MessageFields {
 	content: string,
 	time: number,
 	from: string,
 	type: string,
+	readed: boolean,
 	displayName?: string,
 	photoURL?: string
 }
