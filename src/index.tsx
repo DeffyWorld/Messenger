@@ -52,12 +52,19 @@ const theme: Theme = {
 		authorizationSecondary: '#75c3b6',
 		authorizationInvalid: '#fba4a4',
 
-		disabled: '#b1b1b1',
-		bgSecondary: '#FAFAFA',
+		bgPrimary: '#FFFFFF',
+		bgSecondary: '#EEEEEE',
+		searchPanelBg: '#EEEEEE',
 		textPrimary: '#000000',
 		textSecondary: '#403A4B',
-		
-		highlited: '#27AE60'
+		messageBg: '#F4F4F7',
+		messageFromCurrentUserBg: '#BEEEE6',
+
+		disabled: '#b1b1b1',
+		status: '#27AE60',
+		highlited: '#2D9CDB',
+		chatBgHover: '#cfcfcf',
+		border: '#e2e2e2'
 	},
 	media: {
 		xxl: "(min-width: 1401px)",

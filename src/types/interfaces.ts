@@ -1,10 +1,16 @@
 export interface ShouldSetNewDocState {
-	shouldSetNewDoc: boolean
+	shouldSetNewDoc: boolean,
 }
 
 export interface SearchPanelState {
-	searchValue: string,
-	shouldSearchPanelRender: boolean
+	searchValue: string
+}
+
+export interface ChatState {
+	isChatOpen: boolean,
+	chatWith: string | null,
+	chatWithId: number | null,
+	focusMessageTimestamp: number | null
 }
 
 
@@ -16,11 +22,16 @@ export interface AuthorizationFormInputs {
 	password: string,
 	passwordConfirm: string
 }
+export interface ChatInputFields {
+	image: string,
+	text: string
+}
 
 
 
 export interface ChatFields {
 	id: number,
+	lastTimeMembersRead: any,
 	messages: MessageFields[],
 	members?: string[],
 	membersData?: MemberFields[]
@@ -34,11 +45,13 @@ export interface MemberFields {
 	email?: string
 }
 export interface MessageFields {
+	chatId: number,
 	content: string,
 	time: number,
 	from: string,
 	type: string,
-	readed: boolean,
+	email?: string,
 	displayName?: string,
-	photoURL?: string
+	photoURL?: string,
+	lastTimeMembersRead?: any
 }

@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef } from 'react'
 
 import styled from 'styled-components';
-import { MessageFields } from '../types/interfaces';
+import { ChatFields, MessageFields } from '../types/interfaces';
 
 import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
@@ -12,7 +12,7 @@ import { db } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { getAuth } from 'firebase/auth';
 
-import FoundItem from './FoundItem';
+import ChatListItem from './ChatsListItem';
 
 
 
@@ -29,7 +29,7 @@ const SearchWrapper = styled.div`
     left: 14px;
     right: 14px;
 
-    background: #EEEEEE;
+    background: ${({ theme }) => theme.colors.searchPanelBg};
     border-radius: 12px; 
 
     max-height: 90vh;
@@ -38,7 +38,7 @@ const SearchWrapper = styled.div`
     &::-webkit-scrollbar {
         width: 7px;
     }
-    ::-webkit-scrollbar-thumb {
+    &::-webkit-scrollbar-thumb {
         background-color: #D1D1D1;
         border-radius: 20px;
         border: 3px solid #D1D1D1;
@@ -64,12 +64,13 @@ const Input = styled.input<{ ref: any }>`
 
 
 
-const SearchResults = styled.div`
-  
-`;
-
+const SearchResults = styled.div``;
 const FoundMessagesAmount = styled.div`
     margin-left: 8px;
+    font-family: 'SFPro';
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
 `;
 
 
@@ -82,10 +83,10 @@ const FoundMessagesAmount = styled.div`
 
 
 interface Props {
-    chatsCollection: DocumentData[] | undefined,
-    membersDataCollection: DocumentData[] | undefined
+    chats: ChatFields[],
+    chatsCollection: DocumentData[] | undefined
 }
-function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
+function SearchPanel({ chats, chatsCollection }: Props) {
     const dispatch = useAppDispatch();
     const { searchValue } = useAppSelector(state => state.searchPanel);
     const inputRef = useRef<HTMLInputElement>(null!);
@@ -111,15 +112,15 @@ function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
 
 
     const foundChats = useMemo(() => {
-        let returnArr: DocumentData[] = [];
-        membersDataCollection?.forEach(member => {
-            if (member.displayName.toLocaleLowerCase().includes(searchValue.toLowerCase())) {
-                returnArr = [...returnArr, member];
+        let returnArr: ChatFields[] = [];
+        chats.forEach(chat => {
+            if (chat.membersData![0].displayName.toLocaleLowerCase().includes(searchValue.toLowerCase())) {
+                returnArr = [...returnArr, chat];
             }
         })
         return returnArr;
 
-    }, [searchValue, membersDataCollection])
+    }, [searchValue, chats])
 
 
 
@@ -128,7 +129,7 @@ function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
         chatsCollection?.forEach(chat => {
             chat.messages.forEach((message: MessageFields) => {
                 if (message.type === 'text' && message.content.toLocaleLowerCase().includes(searchValue.toLowerCase())) {
-                    returnArr = [...returnArr, message];
+                    returnArr = [...returnArr, {...message, chatId: chat.id, lastTimeMembersRead: chat.lastTimeMembersRead}];
                 }
             })
         })
@@ -162,6 +163,7 @@ function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
                     if (key === 'email' && message.from === user[key]) {
                         message.displayName = user.displayName;
                         message.photoURL = user.photoURL;
+                        message.email = user.email;
                         returnArr = [...returnArr, message];
                     }
                 }
@@ -186,10 +188,12 @@ function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
             {searchValue !== '' &&
                 <SearchResults>
                     {foundChats.map((chat, index) => (
-                        <FoundItem
-                            key={`${chat.displayName}_${index}`}
-                            displayName={chat.displayName}
-                            photoURL={chat.photoURL}
+                        <ChatListItem
+                            key={`${chat.membersData![0].displayName}_${index}`}
+                            id={chat.id}
+                            email={chat.membersData![0].email!}
+                            displayName={chat.membersData![0].displayName}
+                            photoURL={chat.membersData![0].photo}
                         />
                     ))}
                     {foundMessagesWithUserData.length !== 0 && (
@@ -198,12 +202,15 @@ function SearchPanel({ chatsCollection, membersDataCollection }: Props) {
                         </FoundMessagesAmount>
                     )}
                     {foundMessagesWithUserData.map((message, index) => (
-                        <FoundItem
+                        <ChatListItem
                             key={`${message}_${index}`}
+                            id={message.chatId}
+                            email={message.email!}
                             displayName={message.displayName!}
                             photoURL={message.photoURL!}
-                            content={message.content}
-                            messageTime={message.time}
+                            currentUser={currentUser?.email!}
+                            message={message}
+                            lastTimeMembersRead={message.lastTimeMembersRead}
                         />
                     ))}
                 </SearchResults>

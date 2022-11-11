@@ -3,8 +3,7 @@ import { SearchPanelState } from "../../types/interfaces";
 
 
 const initialState: SearchPanelState = {
-    searchValue: '',
-    shouldSearchPanelRender: false
+    searchValue: ''
 }
 export const searchPanelSlice = createSlice ({
     name: 'searchPanel',
@@ -12,12 +11,9 @@ export const searchPanelSlice = createSlice ({
     reducers: {
         setSearchValue(state, payload) {
             state.searchValue = payload.payload;
-        },
-        setShouldSearchPanelRender(state) {
-            state.shouldSearchPanelRender = !state.shouldSearchPanelRender;
         }
     }
 })
 
 
-export const { setSearchValue, setShouldSearchPanelRender } = searchPanelSlice.actions;
+export const { setSearchValue } = searchPanelSlice.actions;

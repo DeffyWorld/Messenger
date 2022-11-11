@@ -3,7 +3,7 @@ import React, { useRef } from 'react'
 import styled from 'styled-components';
 import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setSearchValue, setShouldSearchPanelRender } from '../redux/slices/searchPanelSlice';
+import { setSearchValue } from '../redux/slices/searchPanelSlice';
 
 
 
@@ -21,7 +21,7 @@ const SearchWrapper = styled.div`
     left: 14px;
     right: 14px;
 
-    background: #EEEEEE;
+    background: ${({ theme }) => theme.colors.searchPanelBg};
     border-radius: 12px; 
 `;
 const Label = styled.label`
@@ -63,13 +63,10 @@ export default function FakeSearchPanel() {
         dispatch(setSearchValue(''));
         inputRef.current.blur();
     }
-    const onFakeSearchPanelClick = () => {
-        dispatch(setShouldSearchPanelRender());
-    }
 
 
     return (
-        <SearchWrapper onClick={onFakeSearchPanelClick} >
+        <SearchWrapper>
             <Label>
                 <AiOutlineSearch />
                 <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} ref={inputRef} />

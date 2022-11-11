@@ -7,12 +7,19 @@ export interface Theme {
 		authorizationSecondary: string,
 		authorizationInvalid: string,
 
-		disabled: string,
+		bgPrimary: string,
 		bgSecondary: string,
 		textPrimary: string,
 		textSecondary: string,
+		searchPanelBg: string,
+		messageBg: string,
+		messageFromCurrentUserBg: string,
 		
-		highlited: string
+		disabled: string,
+		status: string,
+		highlited: string,
+		chatBgHover: string,
+		border: string
 	}
     
 	media: {

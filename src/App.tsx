@@ -6,7 +6,6 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-// import Chat from './components/Chat';
 import Authorization from './pages/Authorization';
 import Main from './pages/Main';
 import Settings from './pages/Settings';
@@ -24,7 +23,7 @@ export default function App() {
 		}
 
 		if (!currentUserLoading && currentUser !== null) {
-			setInterval(() => {
+			setTimeout(() => {
 				updateDoc(doc(db, 'users', `${currentUser?.email}`), {
 					wasOnline: Date.now()
 				})
@@ -37,10 +36,6 @@ export default function App() {
 
 	return (
 		<Routes>
-			{/* <Route path='/' element={<Main/>} >
-				{ <Chat /> }
-			</Route> */}
-
 			<Route path='/' element={<Main/>} />
 			<Route path='/authorization' element={<Authorization/>} />
 			<Route path='/settings' element={<Settings />} />

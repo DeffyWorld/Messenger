@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 
 import { MessageFields } from '../types/interfaces'
+import { useAppDispatch } from '../redux/hooks';
+import { setChat } from '../redux/slices/chatSlice';
 
 
 
@@ -15,15 +17,27 @@ import { MessageFields } from '../types/interfaces'
 
 
 const Wrapper = styled.div`
-    margin: 12px 0px;
+    padding: 6px 6px;
+    border-radius: 6px;
+    transition: all 300ms ease;
+    cursor: pointer;
+
     gap: 10px;
     display: grid;
     grid-template-columns: 1fr 19fr;
+    
+    &:hover {
+        background-color: ${({ theme }) => theme.colors.chatBgHover};
+    }
 `;
-const LinesWrapper = styled.div``;
+const LinesWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3px 0px;
+`;
 const LineWrapper = styled.div`
     position: relative;
-    padding: 3.5px 0;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -42,19 +56,20 @@ const IsUserOnlineIndicator = styled.div`
     left: 34px;
     top: 34px;
 
-    background: ${({ theme }) => theme.colors.highlited};
-    border: 1px solid ${({ theme }) => theme.colors.bgSecondary};
+    background: ${({ theme }) => theme.colors.status};
+    border: 1px solid ${({ theme }) => theme.colors.bgPrimary};
     border-radius: 100px;
 `;
 const IsYourMessegeReadedIndicator = styled.div`
     margin-left: auto;
-    color: ${({ theme }) => theme.colors.highlited};
+    color: ${({ theme }) => theme.colors.status};
 `;
 const UnreadMessegeIndicator = styled.div`
+    flex-shrink: 0;
     margin-left: auto;
     width: 11px;
     height: 11px;
-    background: ${({ theme }) => theme.colors.highlited};
+    background: ${({ theme }) => theme.colors.status};
     border-radius: 100px;
 `;
 
@@ -148,22 +163,38 @@ const Time = styled.div`
 
 
 interface Props {
-    uid: string,
+    id: number,
+    email: string,
     displayName: string,
     photoURL: string,
-    isTyping: boolean,
-    wasOnline: number,
-    currentUser: string
-    lastMessage: MessageFields
+    wasOnline?: number,
+    currentUser?: string,
+    message?: MessageFields,
+    lastTimeMembersRead?: any
 }
-export default function ChatListItem({ uid, displayName, photoURL, isTyping, wasOnline, currentUser, lastMessage }: Props) {
-    const nowTimestamp = new Date().getTime();
-    const isLastMessageFromCurrentUser = lastMessage.from === 'user' || lastMessage.from === currentUser ? true : false;
-    const isChatUserOnline = nowTimestamp + 5500 < wasOnline || wasOnline === 0 ? true : false;
+export default function ChatListItem({ 
+    id, 
+    email, 
+    displayName,
+    photoURL, 
+    wasOnline = 1, 
+    currentUser, 
+    message, 
+    lastTimeMembersRead 
+}: Props) {
+    const ismessageFromCurrentUser = message?.from === 'user' || message?.from === currentUser ? true : false;
+    const isChatUserOnline = Date.now() + 5500 < wasOnline || wasOnline === 0 ? true : false;
+
+
+    const dispatch = useAppDispatch();
+    const onChatListItemClick = () => {
+        const focusMessageTimestamp = message ? message.time : null;
+        dispatch(setChat({email, id, focusMessageTimestamp}));
+    }
 
 
     return (
-        <Wrapper>
+        <Wrapper onClick={onChatListItemClick} >
             <UserImageWrapper>
                 <UserImage photoURL={photoURL} />
                 {isChatUserOnline &&
@@ -181,55 +212,60 @@ export default function ChatListItem({ uid, displayName, photoURL, isTyping, was
                             {displayName}
                         </DisplayName>
                     </ContentWrapper>
-                    
 
-                    <Time>
-                        {new Date().getTime() - lastMessage.time < 172800000
-                            ? new Date(+lastMessage.time).toLocaleTimeString().split('', 5).join('')
-                            : new Date().getTime() - lastMessage.time < 604800000
-                                ? new Date(+lastMessage.time).toDateString().split(' ')[0]
-                                : new Date().getTime() - lastMessage.time < 31556926000
-                                    ? new Date(+lastMessage.time).toDateString().split(' ', 2)[1]
-                                    : new Date(+lastMessage.time).toLocaleDateString()
-                        }
-                    </Time>
-                </LineWrapper>
-
-
-
-                <LineWrapper>
-                    {isLastMessageFromCurrentUser && <TextFromUser>You:</TextFromUser>}
-                    <ContentWrapper>
-                        {lastMessage.type === 'text' &&
-                            (<Text>
-                                {lastMessage.content}
-                            </Text>)
-                        }
-                        {lastMessage.type === 'link' &&
-                            (<HighlightedText>
-                                {lastMessage.content}
-                            </HighlightedText>)
-                        }
-                        {lastMessage.type === 'image' && (
-                            <ImageMessegeWrapper>
-                                <ContentImage image={lastMessage.content} />
-                                <HighlightedText>
-                                    Photo
-                                </HighlightedText>
-                            </ImageMessegeWrapper>
-                        )}
-                    </ContentWrapper>
-
-                    {isLastMessageFromCurrentUser
-                        ? (<IsYourMessegeReadedIndicator>
-                            {lastMessage.readed
-                                ? <BsCheck2All/>
-                                : <BsCheck2 />
+                    {message &&
+                        <Time>
+                            {Date.now() - message.time < 172800000
+                                ? new Date(+message.time).toLocaleTimeString().split('', 5).join('')
+                                : Date.now() - message.time < 604800000
+                                    ? new Date(+message.time).toDateString().split(' ')[0]
+                                    : Date.now() - message.time < 31556926000
+                                        ? new Date(+message.time).toDateString().split(' ', 2)[1]
+                                        : new Date(+message.time).toLocaleDateString()
                             }
-                        </IsYourMessegeReadedIndicator>)
-                        : (<UnreadMessegeIndicator />)
+                        </Time>
                     }
                 </LineWrapper>
+
+
+
+                {message &&
+                    <LineWrapper>
+                        {ismessageFromCurrentUser && <TextFromUser>You:</TextFromUser>}
+                        <ContentWrapper>
+                            {message.type === 'text' &&
+                                (<Text>
+                                    {message.content}
+                                </Text>)
+                            }
+                            {message.type === 'link' &&
+                                (<HighlightedText>
+                                    {message.content}
+                                </HighlightedText>)
+                            }
+                            {message.type === 'image' && (
+                                <ImageMessegeWrapper>
+                                    <ContentImage image={message.content} />
+                                    <HighlightedText>
+                                        Photo
+                                    </HighlightedText>
+                                </ImageMessegeWrapper>
+                            )}
+                        </ContentWrapper>
+
+                        {ismessageFromCurrentUser
+                            ? <IsYourMessegeReadedIndicator>
+                                {message.time < lastTimeMembersRead[email]
+                                    ? <BsCheck2All />
+                                    : <BsCheck2 />
+                                }
+                            </IsYourMessegeReadedIndicator>
+                            : email === 'tailorswift@gmail.com' && email === 'tailorswift@gmail.com'
+                                ? message.time > lastTimeMembersRead['user'] && <UnreadMessegeIndicator />
+                                : message.time > lastTimeMembersRead[currentUser!] && <UnreadMessegeIndicator />
+                        }
+                    </LineWrapper>
+                }
             </LinesWrapper>
         </Wrapper>
     )
