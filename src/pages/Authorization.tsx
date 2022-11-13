@@ -338,6 +338,7 @@ export default function Authorization() {
                 setIsLoading(false);
                 localStorage.setItem('isRedirectResultNeeded', 'false');
             })
+            .catch((error) => console.log(error.message));
 
     }, [auth, dispatch])
 
