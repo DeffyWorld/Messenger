@@ -1,5 +1,9 @@
 export interface ShouldSetNewDocState {
-	shouldSetNewDoc: boolean,
+	shouldSetNewDoc: boolean
+}
+
+export interface IsRedirectResultNeededState {
+	isRedirectResultNeeded: boolean
 }
 
 export interface SearchPanelState {

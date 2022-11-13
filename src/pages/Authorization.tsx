@@ -13,8 +13,9 @@ import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuthState, useCreateUserWithEmailAndPassword, useSignInWithEmailAndPassword, useUpdateProfile } from 'react-firebase-hooks/auth';
 import { getAuth, getRedirectResult, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
-import { useAppDispatch } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
+import { setIsRedirectResultNeeded } from '../redux/slices/isRedirectResultNeeded';
 
 
 
@@ -321,26 +322,28 @@ export default function Authorization() {
 
     function AuthorizationWithGoogle() {
         setIsLoading(true);
-        localStorage.setItem('isRedirectResultNeeded', 'true');
+        dispatch(setIsRedirectResultNeeded(true));
         dispatch(setShouldSetNewDoc(true));
 
         const provider = new GoogleAuthProvider();
         signInWithRedirect(auth, provider).catch((error) => console.log(error.message));
     }
 
+    const { isRedirectResultNeeded } = useAppSelector(state => state.isRedirectResultNeeded);
+
     useEffect(() => {
-        localStorage.getItem('isRedirectResultNeeded') === 'true' && getRedirectResult(auth)
+        isRedirectResultNeeded && getRedirectResult(auth)
             .then(result => {
                 return getDoc(doc(db, 'users', `${result?.user.email}`));
             })
             .then(docSnap => {
                 !docSnap.exists() && dispatch(setShouldSetNewDoc(true));
                 setIsLoading(false);
-                localStorage.setItem('isRedirectResultNeeded', 'false');
+                dispatch(setIsRedirectResultNeeded(false));
             })
             .catch((error) => console.log(error.message));
 
-    }, [auth, dispatch])
+    }, [auth, dispatch, isRedirectResultNeeded])
 
 
 

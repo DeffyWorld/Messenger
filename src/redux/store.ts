@@ -14,18 +14,20 @@ import storage from 'redux-persist/lib/storage';
 import { shouldSetNewDocSlice } from "./slices/shouldSetNewDocSlice";
 import { searchPanelSlice } from "./slices/searchPanelSlice";
 import { chatSlice } from "./slices/chatSlice";
+import { isRedirectResultNeededSlice } from "./slices/isRedirectResultNeeded";
 
 
 
 const rootReducer = combineReducers({
     shouldSetNewDoc: shouldSetNewDocSlice.reducer,
+    isRedirectResultNeeded: isRedirectResultNeededSlice.reducer,
     searchPanel: searchPanelSlice.reducer,
     chat: chatSlice.reducer
 });
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['shouldSetNewDoc', 'chat']
+    whitelist: ['shouldSetNewDoc', 'isRedirectResultNeeded', 'chat']
 };
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 

@@ -68,7 +68,6 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
         padding: 14px 0px;
     `}
 `;
-const MainLoaderWrapper = styled.section``;
 const ChatsWrapper = styled.div`
     height: calc(100vh - 124px);
     overflow-y: auto;
@@ -178,7 +177,7 @@ export default function Main() {
                 email: `${currentUser?.email}`,
                 isOnline: true,
                 photoURL: currentUser?.photoURL !== '' && currentUser?.photoURL === 'null'
-                    ? `${currentUser?.photoURL}` 
+                    ? `${currentUser?.photoURL}`
                     : 'https://pmdoc.ua/wp-content/uploads/default-avatar.png',
                 wasOnline: Date.now(),
                 uid: `${currentUser?.uid}`
@@ -201,7 +200,7 @@ export default function Main() {
         setIsSideBarActive(!isSideBarActive);
     }
 
-    useEffect(() => {isChatOpen && setIsSideBarActive(false)}, [isChatOpen])
+    useEffect(() => { isChatOpen && setIsSideBarActive(false) }, [isChatOpen])
 
 
 
@@ -231,10 +230,9 @@ export default function Main() {
 
     // ChatsList
 
-    const [chatsCollection, chatsCollectionLoading] = useCollectionData(
+    const [chatsCollection] = useCollectionData(
         query(collection(db, 'chats'), where('members', 'array-contains-any', currentUser === null ? ['user'] : ['user', currentUser?.email!]))
     );
-    // console.log(chatsCollection)
 
     const membersExludeUser = useMemo(() => {
         let returnArr: string[] = [''];
@@ -284,7 +282,7 @@ export default function Main() {
 
     }, [chatsCollection, membersDataCollection])
 
-    const sortedChats = useMemo(() => chats?.sort((firstValue, secondValue) => {
+    const sortedChats = useMemo(() => chats.sort((firstValue, secondValue) => {
         if (sortBy === EnumSortParams.Alphabet) {
             const firstValueName = firstValue.membersData![0].displayName.split(' ')[0].toLowerCase();
             const secondValueName = secondValue.membersData![0].displayName.split(' ')[0].toLowerCase();
@@ -297,6 +295,7 @@ export default function Main() {
         }
 
     }), [chats, sortBy])
+    console.log(sortedChats)
 
 
 
@@ -304,89 +303,81 @@ export default function Main() {
 
     return (
         <Wrapper>
-            {!currentUserLoading && !chatsCollectionLoading ?
-                <>
-                    <Sidebar currentUser={currentUser!} auth={auth} isSideBarActive={isSideBarActive} />
+            <Sidebar currentUser={currentUser!} auth={auth} isSideBarActive={isSideBarActive} />
 
-                    <MainWrapper onClick={onRootElClick} isChatOpen={isChatOpen} >
-                        <Header>
-                            <Title>Messages</Title>
+            <MainWrapper onClick={onRootElClick} isChatOpen={isChatOpen} >
+                <Header>
+                    <Title>Messages</Title>
 
-                            <Hamburger onClick={onHamburgerClick} >
-                                <button
-                                    className={isSideBarActive ? "hamburger hamburger--slider is-active" : "hamburger hamburger--slider"}
-                                    type="button"
-                                >
-                                    <span className="hamburger-box">
-                                        <span className="hamburger-inner"></span>
-                                    </span>
-                                </button>
-                            </Hamburger>
-                        </Header>
+                    <Hamburger onClick={onHamburgerClick} >
+                        <button
+                            className={isSideBarActive ? "hamburger hamburger--slider is-active" : "hamburger hamburger--slider"}
+                            type="button"
+                        >
+                            <span className="hamburger-box">
+                                <span className="hamburger-inner"></span>
+                            </span>
+                        </button>
+                    </Hamburger>
+                </Header>
 
 
-                        {searchValue !== '' ? 
-                            <Suspense fallback={<FakeSearchPanel />}>
-                                <SearchPanel chats={chats} chatsCollection={chatsCollection} />
-                            </Suspense>
-                            :
-                            <FakeSearchPanel />
-                        }
+                {searchValue !== '' ?
+                    <Suspense fallback={<FakeSearchPanel />}>
+                        <SearchPanel chats={chats} chatsCollection={chatsCollection} />
+                    </Suspense>
+                    :
+                    <FakeSearchPanel />
+                }
 
 
-                        <SortBy>
-                            <SortByText>Sort by</SortByText>
+                <SortBy>
+                    <SortByText>Sort by</SortByText>
 
-                            <DropdownWrapper>
-                                <SortByParam onClick={toggleDropdown} >
-                                    {sortBy}
-                                    <IconContext.Provider value={{ style: { margin: '2px 0 0 0' } }}>
-                                        {isDropdownActive
-                                            ? (<BiChevronUp />)
-                                            : (<BiChevronDown />)
-                                        }
-                                    </IconContext.Provider>
-                                </SortByParam>
+                    <DropdownWrapper>
+                        <SortByParam onClick={toggleDropdown} >
+                            {sortBy}
+                            <IconContext.Provider value={{ style: { margin: '2px 0 0 0' } }}>
+                                {isDropdownActive
+                                    ? (<BiChevronUp />)
+                                    : (<BiChevronDown />)
+                                }
+                            </IconContext.Provider>
+                        </SortByParam>
 
-                                <Dropdown isDropdownActive={isDropdownActive} >
-                                    {sortParams.map((param, index) => (
-                                        param !== sortBy && (
-                                            <SortByParam key={`${param}_${index}`} onClick={() => toggleSortByParam(param)}>
-                                                {param}
-                                            </SortByParam>
-                                        )
-                                    ))}
-                                </Dropdown>
-                            </DropdownWrapper>
-                        </SortBy>
-
-
-
-                        <ChatsWrapper>
-                            {sortedChats?.map((chat, index) => (
-                                <ChatListItem
-                                    key={`${chat}_${index}`}
-                                    id={chat.id}
-                                    email={chat.membersData![0].email!}
-                                    displayName={chat.membersData![0].displayName}
-                                    photoURL={chat.membersData![0].photo}
-                                    wasOnline={chat.membersData![0].wasOnline!}
-                                    currentUser={currentUser?.email!.split('.')[0]}
-                                    message={chat.messages[chat.messages.length - 1]}
-                                    lastTimeMembersRead={chat.lastTimeMembersRead}
-                                />
+                        <Dropdown isDropdownActive={isDropdownActive} >
+                            {sortParams.map((param, index) => (
+                                param !== sortBy && (
+                                    <SortByParam key={`${param}_${index}`} onClick={() => toggleSortByParam(param)}>
+                                        {param}
+                                    </SortByParam>
+                                )
                             ))}
-                        </ChatsWrapper>
-                    </MainWrapper>
+                        </Dropdown>
+                    </DropdownWrapper>
+                </SortBy>
 
-                    {chatWithId !== null &&
-                        <Chat id={chatWithId!} focusMessageTimestamp={focusMessageTimestamp!} />
-                    }
-                </>
-                :
-                (<MainLoaderWrapper>
-                    Loading
-                </MainLoaderWrapper>)
+
+
+                <ChatsWrapper>
+                    {sortedChats.map((chat, index) => (
+                        <ChatListItem
+                            key={`${chat}_${index}`}
+                            id={chat.id}
+                            email={chat.membersData![0].email!}
+                            displayName={chat.membersData![0].displayName}
+                            photoURL={chat.membersData![0].photo}
+                            wasOnline={chat.membersData![0].wasOnline!}
+                            currentUser={currentUser?.email!.split('.')[0]}
+                            message={chat.messages[chat.messages.length - 1]}
+                            lastTimeMembersRead={chat.lastTimeMembersRead}
+                        />
+                    ))}
+                </ChatsWrapper>
+            </MainWrapper>
+
+            {chatWithId !== null &&
+                <Chat id={chatWithId!} focusMessageTimestamp={focusMessageTimestamp!} />
             }
         </Wrapper>
     )
