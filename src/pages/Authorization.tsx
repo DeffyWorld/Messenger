@@ -325,7 +325,7 @@ export default function Authorization() {
         dispatch(setShouldSetNewDoc(true));
 
         const provider = new GoogleAuthProvider();
-        signInWithRedirect(auth, provider);
+        signInWithRedirect(auth, provider).catch((error) => console.log(error.message));
     }
 
     useEffect(() => {
