@@ -17,7 +17,7 @@ import { setSearchValue } from '../redux/slices/searchPanelSlice';
 
 const SearchWrapper = styled.div`
     position: absolute;
-    z-index: 200;
+    z-index: 10;
     left: 14px;
     right: 14px;
 

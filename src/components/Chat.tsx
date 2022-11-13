@@ -29,26 +29,14 @@ import ChatInputField from './ChatInputField';
 
 
 const Wrapper = styled.div`
-    width: 100%;
+    width: 100vw;
+    margin-right: -100vw;
     background: ${({ theme }) => theme.colors.bgPrimary};
-
-
-
-    .children-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 60px - 65px);
-        overflow-y: scroll; 
-
-        &::scrollbar {
-            width: 7px;
-        }
-        &::scrollbar-thumb {
-            background-color: #D1D1D1;
-            border-radius: 20px;
-            border: 3px solid #D1D1D1;
-        }
-    }
+`;
+const ChatLoader = styled.div`
+    background-color: black;
+    height: 100vh;
+    width: 100vw;
 `;
 
 
@@ -75,6 +63,10 @@ export default function Chat({ id, focusMessageTimestamp }: Props) {
     );
 
     const messages: MessageFields[] = !chatsLoading && chat![0].messages;
+    let imageMessagesCount: number = 0;
+    !chatsLoading && messages.forEach(message => {
+        message.type === 'image' && imageMessagesCount++;
+    })
     const lastMessageTimestamp = !chatsLoading && messages[messages.length - 1].time;
 
 
@@ -102,8 +94,9 @@ export default function Chat({ id, focusMessageTimestamp }: Props) {
                     'lastTimeMembersRead.user': Date.now()
                 })
             } else {
+                const currentUserEmail = currentUser.email!.split('.')[0];
                 updateDoc(doc(db, 'chats', `${id}`), {
-                    [`lastTimeMembersRead.${currentUser.email}`]: Date.now()
+                    [`lastTimeMembersRead.${currentUserEmail}`]: Date.now()
                 })
             }
         }
@@ -113,20 +106,24 @@ export default function Chat({ id, focusMessageTimestamp }: Props) {
 
 
     return (
-        chatWith !== '' ?
             <Wrapper>
-                <ChatHeader chatWith={chatWith} />
+                {chatWith !== '' ?
+                    <>
+                        <ChatHeader chatWith={chatWith} />
 
-                <ChatMessages 
-                    focusMessageTimestamp={focusMessageTimestamp}
-                    messages={messages}
-                    chatWith={chatWith}
-                    chat={chat!}
-                />
+                        <ChatMessages
+                            focusMessageTimestamp={focusMessageTimestamp}
+                            messages={messages}
+                            imageMessagesCount={imageMessagesCount}
+                            chatWith={chatWith}
+                            chat={chat!}
+                        />
 
-                <ChatInputField id={id} currentUser={currentUser!.email!} />
+                        <ChatInputField id={id} currentUser={currentUser!.email!} />
+                    </>
+                    : 
+                    <ChatLoader />
+                }
             </Wrapper>
-            :
-            <></>
     )
 }

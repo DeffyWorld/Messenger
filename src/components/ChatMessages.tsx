@@ -1,4 +1,4 @@
-import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useRef, useState } from 'react'
 
 import styled from 'styled-components';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
@@ -22,9 +22,9 @@ const Messages = styled.div`
     display: flex;
     flex-direction: column;
     height: calc(100vh - 55px - 62px);
-    overflow-y: scroll; 
-    position: relative;
+    overflow-y: auto;
     color: ${({ theme }) => theme.colors.bgPrimary};
+    background-color: ${({ theme}) => theme.colors.bgPrimary};
 
     &::scrollbar {
         width: 7px;
@@ -84,16 +84,17 @@ const Message = styled.div<{ round: boolean, fromCurrentUser: boolean, isPhoto: 
         border-radius: 16px;
         margin-top: -2px;
     `}
-    ${({ fromCurrentUser, theme }) => fromCurrentUser && `
+    ${({ fromCurrentUser, isPhoto, theme }) => fromCurrentUser && `
         align-self: flex-end;
         border-radius: 16px 0px 16px 16px;
-        background-color: none;
+        background-color: ${!isPhoto ? theme.colors.messageFromCurrentUserBg : 'none'};
     `}
     ${({ isPhoto }) => isPhoto && `
         max-height: 240px;
         max-width: 75vw;
         padding: 0px;
         position: relative;
+        background-color: none;
     `}
 `;
 const PhotoMessage = styled(props => <Message as='img' {...props} />)`
@@ -176,10 +177,11 @@ const DateIndicator = styled.div`
 interface Props {
     focusMessageTimestamp: number | null,
     messages: MessageFields[],
+    imageMessagesCount: number,
     chatWith: string,
     chat: DocumentData[]
 }
-export default function ChatMessages({ focusMessageTimestamp, messages, chatWith, chat }: Props) {
+export default function ChatMessages({ focusMessageTimestamp, messages, imageMessagesCount, chatWith, chat }: Props) {
     const messagesRef = useRef<HTMLDivElement>(null);
     const focusMessageRef = useRef<HTMLDivElement>(null);
     const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -195,11 +197,11 @@ export default function ChatMessages({ focusMessageTimestamp, messages, chatWith
     }
 
     useEffect(() => {
-        const lastMessageRefCurrent = lastMessageRef.current;
+        const lastMessageRefCurrent = messages.length === 1 ? focusMessageRef.current : lastMessageRef.current;
 
         const observer = new IntersectionObserver(observerCallback, {
             root: messagesRef.current,
-            rootMargin: '20px',
+            rootMargin: '0px',
             threshold: 1
         });
 
@@ -209,30 +211,44 @@ export default function ChatMessages({ focusMessageTimestamp, messages, chatWith
             lastMessageRefCurrent && observer.unobserve(lastMessageRefCurrent);
         }
 
-    }, [])
+    }, [messages.length])
 
 
 
-    const scrollToFocusMessage = useCallback(() => {
-        focusMessageTimestamp
-            ? messagesRef.current?.scrollTo({ top: focusMessageRef.current?.offsetTop })
-            : messagesRef.current?.scrollTo({ top: lastMessageRef.current?.offsetTop });
+    // const [shouldScrollToFocusMessage, setShouldScrollToFocusMessage] = useState<boolean>(true);
 
-    }, [focusMessageTimestamp])
-    
+    // const timeout = () => {
+    //     setTimeout(() => {
+    //         setShouldScrollToFocusMessage(false);
+    //     }, 3000)
+    // }
+
+    // const scrollToFocusMessage = useCallback(() => {
+        // shouldScrollToFocusMessage && focusMessageTimestamp
+        // ? focusMessageRef.current?.scrollIntoView()
+        // // : lastMessageRef.current?.scrollIntoView();
+
+    // }, [focusMessageTimestamp, shouldScrollToFocusMessage])
 
     const scrollToBottom = () => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
+        lastMessageRef.current?.scrollIntoView();
     }
 
-    useEffect(() => scrollToFocusMessage(), [focusMessageTimestamp, scrollToFocusMessage]);
+    useEffect(() => {
+        scrollToBottom();
 
-    useEffect(() => scrollToBottom(), [messages]);
+    }, [messages])
+
+    // useEffect(() => {
+    //     scrollToFocusMessage();
+
+    // }, [scrollToFocusMessage])
+
 
 
 
     return (
-        <Messages ref={messagesRef} >
+        <Messages ref={messagesRef} id={'messages'} >
             {messages.map((message, index) => (
                 <Fragment key={`${message.time}_${index}`} >
                     {index === 0 || new Date(+message.time).toLocaleDateString() !== new Date(+messages[index - 1].time).toLocaleDateString() ?
@@ -266,14 +282,14 @@ export default function ChatMessages({ focusMessageTimestamp, messages, chatWith
                         {message.type === 'image' &&
                             <PhotoMessage
                                 src={message.content}
-                                onLoad={scrollToFocusMessage}
+                                // onLoad={timeout}
                                 round={!(index === 0 || message.from !== messages[index === 0 ? index : index - 1].from)}
                                 fromCurrentUser={message.from !== chatWith}
                             />
                         }
                         {message.from !== chatWith &&
                             <ReadedIndicator isPhoto={message.type === 'image'} >
-                                {message.time < chat![0].lastTimeMembersRead[chatWith]
+                                {message.time < chat![0].lastTimeMembersRead[chatWith.split('.')[0]]
                                     ? <BsCheck2All />
                                     : <BsCheck2 />
                                 }

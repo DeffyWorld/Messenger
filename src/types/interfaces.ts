@@ -8,7 +8,6 @@ export interface SearchPanelState {
 
 export interface ChatState {
 	isChatOpen: boolean,
-	chatWith: string | null,
 	chatWithId: number | null,
 	focusMessageTimestamp: number | null
 }

@@ -5,7 +5,7 @@ import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 
 import { MessageFields } from '../types/interfaces'
 import { useAppDispatch } from '../redux/hooks';
-import { setChat } from '../redux/slices/chatSlice';
+import { setChat, setIsChatOpen } from '../redux/slices/chatSlice';
 
 
 
@@ -189,6 +189,7 @@ export default function ChatListItem({
     const dispatch = useAppDispatch();
     const onChatListItemClick = () => {
         const focusMessageTimestamp = message ? message.time : null;
+        dispatch(setIsChatOpen());
         dispatch(setChat({email, id, focusMessageTimestamp}));
     }
 
@@ -255,7 +256,7 @@ export default function ChatListItem({
 
                         {ismessageFromCurrentUser
                             ? <IsYourMessegeReadedIndicator>
-                                {message.time < lastTimeMembersRead[email]
+                                {message.time < lastTimeMembersRead[email.split('.')[0]]
                                     ? <BsCheck2All />
                                     : <BsCheck2 />
                                 }

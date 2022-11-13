@@ -63,7 +63,7 @@ const theme: Theme = {
 		disabled: '#b1b1b1',
 		status: '#27AE60',
 		highlited: '#2D9CDB',
-		chatBgHover: '#cfcfcf',
+		chatBgHover: '#e6e6e6',
 		border: '#e2e2e2'
 	},
 	media: {

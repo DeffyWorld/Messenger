@@ -298,10 +298,10 @@ export default function Authorization() {
             createUserWithEmailAndPassword(data.email, data.password)
                 .then(() => {
                     updateProfile({ displayName: `${data.name} ${data.surname}` })
-                })
-                .then(() => {
-                    dispatch(setShouldSetNewDoc(true));
-                    setIsLoading(false);
+                        .then(() => {
+                            dispatch(setShouldSetNewDoc(true));
+                            setIsLoading(false);
+                        })
                 })
         }
     }

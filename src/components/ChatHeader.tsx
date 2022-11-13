@@ -8,7 +8,7 @@ import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '../firebase';
 
 import { useAppDispatch } from '../redux/hooks';
-import { resetChat } from '../redux/slices/chatSlice';
+import { resetChat, resetIsChatOpen } from '../redux/slices/chatSlice';
 
 
 
@@ -38,6 +38,7 @@ const Back = styled.button`
     margin: 0px 0px -8px -7px;
     background: ${({ theme }) => theme.colors.bgPrimary};
     color: ${({ theme }) => theme.colors.textPrimary};
+    cursor: pointer;
 `;
 const Photo = styled.div<{ photo: string }>`
     width: 42px;
@@ -106,7 +107,10 @@ export default function ChatHeader({ chatWith }: Props) {
 
     const dispatch = useAppDispatch();
     const onBackButtonClick = () => {
-        dispatch(resetChat());
+        dispatch(resetIsChatOpen());
+        setTimeout(() => {
+            dispatch(resetChat());
+        }, 400)
     }
 
 

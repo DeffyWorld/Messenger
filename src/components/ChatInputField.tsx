@@ -6,9 +6,8 @@ import { AiOutlinePaperClip } from 'react-icons/ai';
 import { ChatInputFields } from '../types/interfaces';
 
 import { useForm } from 'react-hook-form';
-import { useDownloadURL, useUploadFile } from 'react-firebase-hooks/storage';
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
-import { app, db, storage } from '../firebase';
+import {  db, storage } from '../firebase';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 
@@ -27,6 +26,7 @@ import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 const Form = styled.form`
     height: 62px;
     border-top: 2px solid ${({ theme }) => theme.colors.bgSecondary};
+    background-color: ${({ theme}) => theme.colors.bgPrimary};
 
     display: flex;
     justify-content: center;
@@ -128,8 +128,6 @@ export default function ChatInputField({ id, currentUser }: Props) {
             return false;
         }
     }
-
-    const [uploadImage, uploading, snapshot, error] = useUploadFile();
 
     const onSubmit = async (data: ChatInputFields) => {
         if (data.text !== '') {

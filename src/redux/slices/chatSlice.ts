@@ -4,7 +4,6 @@ import { ChatState } from "../../types/interfaces";
 
 const initialState: ChatState = {
     isChatOpen: false,
-	chatWith: null,
     chatWithId: null,
     focusMessageTimestamp: null
 }
@@ -12,15 +11,18 @@ export const chatSlice = createSlice ({
     name: 'chat',
     initialState,
     reducers: {
-        setChat(state, payload) {
+        setIsChatOpen(state) {
             state.isChatOpen = true;
-            state.chatWith = payload.payload.email;
+        },
+        setChat(state, payload) {
             state.chatWithId = payload.payload.id;
             state.focusMessageTimestamp = payload.payload.focusMessageTimestamp;
         },
+        resetIsChatOpen(state) {
+            state.isChatOpen = false;
+        },
         resetChat(state) {
             state.isChatOpen = false;
-            state.chatWith = null;
             state.chatWithId = null;
             state.focusMessageTimestamp = null;
         }
@@ -28,4 +30,4 @@ export const chatSlice = createSlice ({
 })
 
 
-export const { setChat, resetChat } = chatSlice.actions;
+export const { setIsChatOpen, setChat, resetIsChatOpen, resetChat } = chatSlice.actions;
