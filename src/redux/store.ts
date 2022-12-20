@@ -1,4 +1,5 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import localForage from "localforage";
 import { 
     persistStore, 
     persistReducer,
@@ -9,27 +10,34 @@ import {
     PURGE,
     REGISTER
 } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
 
-import { shouldSetNewDocSlice } from "./slices/shouldSetNewDocSlice";
+import { authorizationSlice } from "./slices/authorizationSlice";
+import { mainSlice } from "./slices/mainSlice";
 import { searchPanelSlice } from "./slices/searchPanelSlice";
 import { chatSlice } from "./slices/chatSlice";
-import { isRedirectResultNeededSlice } from "./slices/isRedirectResultNeeded";
 
 
+
+const rootPersistConfig = {
+    key: 'root',
+    storage: localForage,
+    whitelist: ['main', 'chat']
+};
+
+const authorizationPersistConfig = {
+    key: 'authorization',
+    storage: localForage,
+    blacklist: ['authorizationErrors', 'loader']
+};
 
 const rootReducer = combineReducers({
-    shouldSetNewDoc: shouldSetNewDocSlice.reducer,
-    isRedirectResultNeeded: isRedirectResultNeededSlice.reducer,
+    authorization: persistReducer(authorizationPersistConfig, authorizationSlice.reducer),
+    main: mainSlice.reducer,
     searchPanel: searchPanelSlice.reducer,
     chat: chatSlice.reducer
 });
-const persistConfig = {
-    key: 'root',
-    storage,
-    whitelist: ['shouldSetNewDoc', 'isRedirectResultNeeded', 'chat']
-};
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+const persistedReducer = persistReducer(rootPersistConfig, rootReducer);
 
 
 

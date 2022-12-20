@@ -7,7 +7,7 @@ import { ChatInputFields } from '../types/interfaces';
 
 import { useForm } from 'react-hook-form';
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
-import {  db, storage } from '../firebase';
+import { firestore, storage } from '../firebase';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 
@@ -131,7 +131,7 @@ export default function ChatInputField({ id, currentUser }: Props) {
 
     const onSubmit = async (data: ChatInputFields) => {
         if (data.text !== '') {
-            updateDoc(doc(db, 'chats', `${id}`), {
+            updateDoc(doc(firestore, 'chats', `${id}`), {
                 messages: arrayUnion({
                     chatId: id,
                     content: data.text,
@@ -149,7 +149,7 @@ export default function ChatInputField({ id, currentUser }: Props) {
             await uploadBytes(storageRef, image)
             const imageUrl = await getDownloadURL(storageRef);
 
-            updateDoc(doc(db, 'chats', `${id}`), {
+            updateDoc(doc(firestore, 'chats', `${id}`), {
                 messages: arrayUnion({
                     chatId: id,
                     content: imageUrl,

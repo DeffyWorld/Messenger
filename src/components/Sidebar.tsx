@@ -8,7 +8,7 @@ import { GrFormClose } from 'react-icons/gr';
 import { CSSTransition } from 'react-transition-group';
 import { Auth, User } from 'firebase/auth';
 import { arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { firestore } from '../firebase';
 
 
 
@@ -185,7 +185,7 @@ export default function Sidebar({ currentUser, auth, isSideBarActive }: Props) {
     const confirmHandler = async () => {
         const id = Date.now();
 
-        await setDoc(doc(db, "chats", `${id}`), {
+        await setDoc(doc(firestore, "chats", `${id}`), {
             id: id,
             lastTimeMembersRead: {},
             members: [currentUser.email, inputValue],
@@ -200,7 +200,7 @@ export default function Sidebar({ currentUser, auth, isSideBarActive }: Props) {
 
         const currentUserEmail = currentUser.email!.split('.')[0];
         const inputValueEmail = inputValue.split('.')[0];
-        await updateDoc(doc(db, 'chats', `${id}`), {
+        await updateDoc(doc(firestore, 'chats', `${id}`), {
             [`lastTimeMembersRead.${currentUserEmail}`]: 0,
             [`lastTimeMembersRead.${inputValueEmail}`]: 0
         })

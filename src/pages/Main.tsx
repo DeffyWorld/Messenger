@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import React, { lazy, Suspense, useMemo } from 'react'
 
 import styled from 'styled-components';
 import 'hamburgers/dist/hamburgers.min.css'
@@ -9,18 +9,20 @@ import { BiChevronUp, BiChevronDown } from 'react-icons/bi';
 import { EnumSortParams } from '../types/enums';
 import { ChatFields, MemberFields } from '../types/interfaces';
 
-import { db } from '../firebase';
-import { collection, doc, query, setDoc, where } from 'firebase/firestore';
+import { firestore } from '../firebase';
+import { collection, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useCollectionData, useCollectionDataOnce } from 'react-firebase-hooks/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
+import { setIsDropdownActive } from '../redux/slices/mainSlice';
 
 import FakeSearchPanel from '../components/FakeSearchPanel';
 import ChatListItem from '../components/ChatsListItem';
 import Chat from '../components/Chat';
 import Sidebar from '../components/Sidebar';
+import Hamburger from '../components/Hamburger';
+import SortBy from '../components/SortBy';
 
 const SearchPanel = lazy(() => import('../components/SearchPanel'));
 
@@ -90,17 +92,6 @@ const Header = styled.div`
     justify-content: space-between;
     align-items: center;
 `;
-const Hamburger = styled.div`
-    transform: scale(0.6);
-    margin-top: -13px;
-
-    .hamburger {
-        padding: 0;
-    }
-    .hamburger-inner, .hamburger-inner::before, .hamburger-inner::after {
-        background-color: ${({ theme }) => theme.colors.textPrimary};
-    }
-`;
 const Title = styled.h1`
     margin-bottom: 19px;
 
@@ -114,45 +105,6 @@ const Title = styled.h1`
 
 
 
-const SortBy = styled.div`
-    margin: 46px 0px 4px 13px;
-    gap: 4px;
-    display: flex;
-`;
-const SortByText = styled.p`
-    font-family: 'SFPro';
-    font-weight: 400;
-    font-size: 13px;
-    line-height: 16px;
-    white-space: nowrap;
-    color: ${({ theme }) => theme.colors.textSecondary};
-`;
-const DropdownWrapper = styled.div`
-    position: relative;
-`;
-const Dropdown = styled.div<{ isDropdownActive: boolean }>`
-    display: none;
-
-    ${({ isDropdownActive }) => isDropdownActive && `
-        position: absolute;
-        display: block;
-    `}
-`;
-const SortByParam = styled.div`
-    font-family: 'SFPro';
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 16px;
-    color: #2D9CDB;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-`;
-
-
-
-
 
 
 
@@ -163,44 +115,18 @@ const SortByParam = styled.div`
 export default function Main() {
     const dispatch = useAppDispatch();
     const auth = getAuth();
-    const [currentUser, currentUserLoading] = useAuthState(auth);
+    const [currentUser] = useAuthState(auth);
 
-    const { shouldSetNewDoc } = useAppSelector(state => state.shouldSetNewDoc);
+    const { sortBy } = useAppSelector(state => state.main);
     const { searchValue } = useAppSelector(state => state.searchPanel);
-    const { isChatOpen, chatWithId, focusMessageTimestamp } = useAppSelector(state => state.chat);
-
-    useEffect(() => {
-        if (shouldSetNewDoc && !currentUserLoading) {
-            console.log(currentUser?.displayName);
-            setDoc(doc(collection(db, "users"), `${currentUser?.email}`), {
-                displayName: `${currentUser?.displayName}`,
-                email: `${currentUser?.email}`,
-                isOnline: true,
-                photoURL: currentUser?.photoURL !== '' && currentUser?.photoURL === 'null'
-                    ? `${currentUser?.photoURL}`
-                    : 'https://pmdoc.ua/wp-content/uploads/default-avatar.png',
-                wasOnline: Date.now(),
-                uid: `${currentUser?.uid}`
-            }).then(() => {
-                dispatch(setShouldSetNewDoc(false));
-            })
-        }
-
-    }, [currentUser?.displayName, currentUser?.email, currentUser?.photoURL, currentUser?.uid, currentUserLoading, dispatch, shouldSetNewDoc])
+    const { chatWithId, focusMessageTimestamp } = useAppSelector(state => state.chat);
+    const { isChatOpen, isSideBarActive, isDropdownActive } = useAppSelector(state => state.main);
 
 
 
-
-
-    // Sidebar
-
-    const [isSideBarActive, setIsSideBarActive] = useState<boolean>(false);
-
-    const onHamburgerClick = () => {
-        setIsSideBarActive(!isSideBarActive);
+    const onRootElClick = () => {
+        isDropdownActive === true && dispatch(setIsDropdownActive(false));
     }
-
-    useEffect(() => { isChatOpen && setIsSideBarActive(false) }, [isChatOpen])
 
 
 
@@ -208,21 +134,7 @@ export default function Main() {
 
     // SortBy
 
-    const sortParams = Object.keys(EnumSortParams);
-    const [isDropdownActive, setIsDropdownActive] = useState<boolean>(false);
-    const [sortBy, setSortBy] = useState<string>(localStorage.getItem('sortBy') || EnumSortParams.Newest);
-    localStorage.setItem('sortBy', sortBy);
-
-    const onRootElClick = () => {
-        isDropdownActive === true && setIsDropdownActive(false);
-    }
-    const toggleDropdown = () => {
-        setIsDropdownActive(!isDropdownActive);
-    }
-    const toggleSortByParam = (param: string) => {
-        setSortBy(param);
-        setIsDropdownActive(false);
-    }
+    
 
 
 
@@ -231,7 +143,7 @@ export default function Main() {
     // ChatsList
 
     const [chatsCollection] = useCollectionData(
-        query(collection(db, 'chats'), where('members', 'array-contains-any', currentUser === null ? ['user'] : ['user', currentUser?.email!]))
+        query(collection(firestore, 'chats'), where('members', 'array-contains-any', currentUser === null ? ['user'] : ['user', currentUser?.email!]))
     );
 
     const membersExludeUser = useMemo(() => {
@@ -248,7 +160,7 @@ export default function Main() {
     }, [chatsCollection, currentUser?.email])
 
     const [membersDataCollection] = useCollectionDataOnce(
-        query(collection(db, 'users'), where('email', 'in', membersExludeUser))
+        query(collection(firestore, 'users'), where('email', 'in', membersExludeUser))
     );
 
     const chats = useMemo(() => {
@@ -295,7 +207,6 @@ export default function Main() {
         }
 
     }), [chats, sortBy])
-    console.log(sortedChats)
 
 
 
@@ -309,18 +220,8 @@ export default function Main() {
                 <Header>
                     <Title>Messages</Title>
 
-                    <Hamburger onClick={onHamburgerClick} >
-                        <button
-                            className={isSideBarActive ? "hamburger hamburger--slider is-active" : "hamburger hamburger--slider"}
-                            type="button"
-                        >
-                            <span className="hamburger-box">
-                                <span className="hamburger-inner"></span>
-                            </span>
-                        </button>
-                    </Hamburger>
+                    <Hamburger dispatch={dispatch} isSideBarActive={isSideBarActive} />
                 </Header>
-
 
                 {searchValue !== '' ?
                     <Suspense fallback={<FakeSearchPanel />}>
@@ -330,32 +231,7 @@ export default function Main() {
                     <FakeSearchPanel />
                 }
 
-
-                <SortBy>
-                    <SortByText>Sort by</SortByText>
-
-                    <DropdownWrapper>
-                        <SortByParam onClick={toggleDropdown} >
-                            {sortBy}
-                            <IconContext.Provider value={{ style: { margin: '2px 0 0 0' } }}>
-                                {isDropdownActive
-                                    ? (<BiChevronUp />)
-                                    : (<BiChevronDown />)
-                                }
-                            </IconContext.Provider>
-                        </SortByParam>
-
-                        <Dropdown isDropdownActive={isDropdownActive} >
-                            {sortParams.map((param, index) => (
-                                param !== sortBy && (
-                                    <SortByParam key={`${param}_${index}`} onClick={() => toggleSortByParam(param)}>
-                                        {param}
-                                    </SortByParam>
-                                )
-                            ))}
-                        </Dropdown>
-                    </DropdownWrapper>
-                </SortBy>
+                <SortBy dispatch={dispatch} isDropdownActive={isDropdownActive} sortBy={sortBy} />
 
 
 

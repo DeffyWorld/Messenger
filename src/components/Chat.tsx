@@ -8,7 +8,7 @@ import { getAuth } from 'firebase/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, doc, query, updateDoc, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { firestore } from '../firebase';
 
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
@@ -59,7 +59,7 @@ interface Props {
 }
 export default function Chat({ id, focusMessageTimestamp }: Props) {
     const [chat, chatsLoading] = useCollectionData(
-        query(collection(db, 'chats'), where('id', '==', id))
+        query(collection(firestore, 'chats'), where('id', '==', id))
     );
 
     const messages: MessageFields[] = !chatsLoading && chat![0].messages;
@@ -90,12 +90,12 @@ export default function Chat({ id, focusMessageTimestamp }: Props) {
     useEffect(() => {
         if (chatWith !== '' && currentUser) {
             if (chatWith === 'tailorswift@gmail.com' || chatWith === 'barakobama@gmail.com') {
-                updateDoc(doc(db, 'chats', `${id}`), {
+                updateDoc(doc(firestore, 'chats', `${id}`), {
                     'lastTimeMembersRead.user': Date.now()
                 })
             } else {
                 const currentUserEmail = currentUser.email!.split('.')[0];
-                updateDoc(doc(db, 'chats', `${id}`), {
+                updateDoc(doc(firestore, 'chats', `${id}`), {
                     [`lastTimeMembersRead.${currentUserEmail}`]: Date.now()
                 })
             }

@@ -9,13 +9,9 @@ import { AuthorizationFormInputs } from '../types/interfaces';
 
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { useAuthState, useCreateUserWithEmailAndPassword, useSignInWithEmailAndPassword, useUpdateProfile } from 'react-firebase-hooks/auth';
-import { getAuth, getRedirectResult, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { getAuth, getRedirectResult } from "firebase/auth";
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setShouldSetNewDoc } from '../redux/slices/shouldSetNewDocSlice';
-import { setIsRedirectResultNeeded } from '../redux/slices/isRedirectResultNeeded';
+import { authorizationWithGoogle, createUserOrSignIn, setActiveTab, setLoader } from '../redux/slices/authorizationSlice';
 
 
 
@@ -56,7 +52,7 @@ const Tabs = styled.div`
     justify-content: space-evenly;
     margin-bottom: 40px;
 `
-const Tab = styled.h2<{ isActive: boolean, params: any }>`
+const Tab = styled.h2<{ isActive: boolean, activeTab: any }>`
     font-family: SFPro;
     font-weight: 700;
     font-size: 22px;
@@ -218,145 +214,82 @@ const СontinueWithGoogleText = styled.p`
 
 
 export default function Authorization() {
-    // Tabs
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const auth = getAuth();
 
-    const [params, setParams] = useState<string>(localStorage.getItem('params') || 'logIn');
-    localStorage.setItem('params', `${params}`);
-    function changeParams() {
-        params === 'logIn' ? setParams('signIn') : setParams('logIn');
-    }
-
-
-
-
-
-    // Loading
-
-    const [isLoading, setIsLoading] = useState<boolean>(localStorage.getItem('isLoading') === 'true' ? true : false);
-    localStorage.setItem('isLoading', `${isLoading}`);
-
-    const [loader, setLoader] = useState<string>(localStorage.getItem('loader') || '.');
-    localStorage.setItem('loader', `${loader}`);
-
-    useEffect(() => {
-        isLoading && setTimeout(() => {
-            loader === '.' && setLoader('..');
-            loader === '..' && setLoader('...');
-            loader === '...' && setLoader('.');
-        }, 300);
-
-    }, [isLoading, loader])
-
-
-
-
-
-    // Form 
-
+    const { isLoading, loader, activeTab, authorizationErrors } = useAppSelector(state => state.authorization);
     const {
         register,
         formState: { errors, dirtyFields },
         handleSubmit,
         watch,
-        setError
+        setError,
+        clearErrors
     } = useForm<AuthorizationFormInputs>({
         mode: "all"
     });
 
 
 
+    const tabHandler = () => {
+        activeTab === 'logIn' ? dispatch(setActiveTab('signIn')) : dispatch(setActiveTab('logIn'));
+        if (errors.email?.message === 'User not found' || errors.email?.message === 'User with this email already exists' || errors.password?.message === 'Wrong password') {
+            clearErrors();
+        }
+    }
+
     const currentPassword = watch('password');
     const [inputType, setInputType] = useState('password');
 
-    function changeInputType() {
+    const changeInputType = () => {
         inputType === 'password' ? setInputType('text') : setInputType('password');
     }
-    function enterClickHandler(event: React.KeyboardEvent) {
+    const enterClickHandler = (event: React.KeyboardEvent) => {
         event.code === 'Enter' && handleSubmit(onSubmit)();
     }
 
 
 
-    const navigate = useNavigate();
-    const dispatch = useAppDispatch();
-    const auth = getAuth();
-    const [currentUser, currentUserLoading] = useAuthState(auth);
+    const onSubmit = (data: AuthorizationFormInputs): void => {
+        dispatch(createUserOrSignIn({ 
+            auth,
+            navigate,
+            activeTab, 
+            data
+        }));
+    }
 
-    const [signInWithEmailAndPassword, , logInLoading, logInError,] = useSignInWithEmailAndPassword(auth);
-    const [createUserWithEmailAndPassword, signedInUser, signInLoading, signInError] = useCreateUserWithEmailAndPassword(auth);
-    const [updateProfile] = useUpdateProfile(auth);
-
-
-
-    function onSubmit(data: AuthorizationFormInputs): void {
-        setIsLoading(true);
-        if (params === 'logIn') {
-            signInWithEmailAndPassword(data.email, data.password)
-                .then(() => {
-                    setIsLoading(false);
-                })
-        } else {
-            createUserWithEmailAndPassword(data.email, data.password)
-                .then(() => {
-                    updateProfile({ displayName: `${data.name} ${data.surname}` })
-                        .then(() => {
-                            dispatch(setShouldSetNewDoc(true));
-                            setIsLoading(false);
-                        })
-                })
-        }
+    const googleButtonHandler = () => {
+        dispatch(authorizationWithGoogle({ isRedirectResultNeeded: false, auth }));
     }
 
     useEffect(() => {
-        logInError?.code === 'auth/user-not-found'
+        getRedirectResult(auth)
+            .then((result) => {
+                result !== null && dispatch(authorizationWithGoogle({ isRedirectResultNeeded: true, auth, currentUser: result.user, navigate }));
+            }) 
+
+    }, [auth, dispatch, navigate])
+
+    useEffect(() => {
+        authorizationErrors.createUserOrSignIn === 'auth/user-not-found'
             && setError('email', { type: 'custom', message: 'User not found' });
-        logInError?.code === 'auth/wrong-password'
+        authorizationErrors.createUserOrSignIn === 'auth/email-already-in-use'
+            && setError('email', { type: 'custom', message: 'User with this email already exists' });
+        authorizationErrors.createUserOrSignIn === 'auth/wrong-password'
             && setError('password', { type: 'custom', message: 'Wrong password' });
 
-        signInError?.code === 'auth/email-already-in-use'
-            && setError('email', { type: 'custom', message: 'User with this email already exists' });
-
-    }, [logInError?.code, signInError?.code, setError])
-
-
-
-    function AuthorizationWithGoogle() {
-        setIsLoading(true);
-        dispatch(setIsRedirectResultNeeded(true));
-        dispatch(setShouldSetNewDoc(true));
-
-        const provider = new GoogleAuthProvider();
-        signInWithRedirect(auth, provider).catch((error) => console.log(error.message));
-    }
-
-    const { isRedirectResultNeeded } = useAppSelector(state => state.isRedirectResultNeeded);
+    }, [authorizationErrors.createUserOrSignIn, setError])
 
     useEffect(() => {
-        isRedirectResultNeeded && getRedirectResult(auth)
-            .then(result => {
-                return getDoc(doc(db, 'users', `${result?.user.email}`));
-            })
-            .then(docSnap => {
-                !docSnap.exists() && dispatch(setShouldSetNewDoc(true));
-                setIsLoading(false);
-                dispatch(setIsRedirectResultNeeded(false));
-            })
-            .catch((error) => console.log(error.message));
+        isLoading && setTimeout(() => {
+            loader === '.' && dispatch(setLoader('..'));
+            loader === '..' && dispatch(setLoader('...'));
+            loader === '...' && dispatch(setLoader('.'));
+        }, 300);
 
-    }, [auth, dispatch, isRedirectResultNeeded])
-
-
-
-
-
-    useEffect(() => {
-        if (!isLoading && !currentUserLoading && !logInLoading && !signInLoading && currentUser !== null) {
-            navigate('/', { replace: true });
-        }
-
-    }, [currentUser, currentUserLoading, logInLoading, signInLoading, navigate, logInError, signedInUser, isLoading])
-
-
+    }, [dispatch, isLoading, loader])
     
 
 
@@ -364,8 +297,8 @@ export default function Authorization() {
         <Wrapper>
             <Form onSubmit={handleSubmit(onSubmit)}>
                 <Tabs>
-                    <Tab isActive={params === 'logIn' ? true : false} params={params} onClick={changeParams}>Log In</Tab>
-                    <Tab isActive={params === 'signIn' ? true : false} params={params} onClick={changeParams}>Sign In</Tab>
+                    <Tab isActive={activeTab === 'logIn' ? true : false} activeTab={activeTab} onClick={tabHandler}>Log In</Tab>
+                    <Tab isActive={activeTab === 'signIn' ? true : false} activeTab={activeTab} onClick={tabHandler}>Sign In</Tab>
                 </Tabs>
 
 
@@ -383,11 +316,11 @@ export default function Authorization() {
                             value: 60,
                             message: "Not more than sixty characters",
                         },
-                        disabled: params === 'logIn' ? true : false
+                        disabled: activeTab === 'logIn' ? true : false
                     })}
                     isValid={errors?.name ? false : true}
                     onKeyDown={enterClickHandler}
-                    isHidden={params === 'logIn' ? true : false}
+                    isHidden={activeTab === 'logIn' ? true : false}
                 />
                 <ErrorMessage>{errors?.name && errors?.name?.message}</ErrorMessage>
 
@@ -405,11 +338,11 @@ export default function Authorization() {
                             value: 60,
                             message: "Not more than sixty characters",
                         },
-                        disabled: params === 'logIn' ? true : false
+                        disabled: activeTab === 'logIn' ? true : false
                     })}
                     isValid={errors?.surname ? false : true}
                     onKeyDown={enterClickHandler}
-                    isHidden={params === 'logIn' ? true : false}
+                    isHidden={activeTab === 'logIn' ? true : false}
                 />
                 <ErrorMessage>{errors?.surname && errors?.surname?.message}</ErrorMessage>
 
@@ -487,16 +420,16 @@ export default function Authorization() {
                                 "Not more than a hundred characters",
                         },
                         validate: value => value === currentPassword || "The passwords do not match",
-                        disabled: params === 'logIn' ? true : false
+                        disabled: activeTab === 'logIn' ? true : false
                     })}
                     isValid={errors?.passwordConfirm ? false : true}
                     onKeyDown={enterClickHandler}
-                    isHidden={params === 'logIn' ? true : false}
+                    isHidden={activeTab === 'logIn' ? true : false}
                 />
-                <ShowPassword onClick={changeInputType} isHidden={params === 'logIn' || inputType === 'password'}>
+                <ShowPassword onClick={changeInputType} isHidden={activeTab === 'logIn' || inputType === 'password'}>
                     <AiOutlineEye />
                 </ShowPassword>
-                <ShowPassword onClick={changeInputType} isHidden={params === 'logIn' || inputType === 'text'}>
+                <ShowPassword onClick={changeInputType} isHidden={activeTab === 'logIn' || inputType === 'text'}>
                     <AiOutlineEyeInvisible />
                 </ShowPassword>
                 <ErrorMessage>{errors?.passwordConfirm && errors?.passwordConfirm?.message}</ErrorMessage>
@@ -507,7 +440,7 @@ export default function Authorization() {
                     <Button
                         onClick={handleSubmit(onSubmit)}
                         isValid={
-                            params === 'logIn'
+                            activeTab === 'logIn'
                                 ? errors.email !== undefined ||
                                 dirtyFields.email !== true ||
                                 errors.password !== undefined ||
@@ -524,7 +457,7 @@ export default function Authorization() {
                                 dirtyFields.passwordConfirm !== true
                         }
                     >
-                        {params === 'logIn' ? 'Login' : 'Register'}
+                        {activeTab === 'logIn' ? 'Login' : 'Register'}
                     </Button>
                     :
                     <Loader>
@@ -538,7 +471,7 @@ export default function Authorization() {
 
 
 
-                <СontinueWithGoogle onClick={AuthorizationWithGoogle}>
+                <СontinueWithGoogle onClick={googleButtonHandler}>
                     <IconContext.Provider value={{ size: '1.4rem' }}>
                         <div>
                             <FcGoogle />

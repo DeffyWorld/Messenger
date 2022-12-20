@@ -1,9 +1,23 @@
-export interface ShouldSetNewDocState {
-	shouldSetNewDoc: boolean
+import { EnumSortParams } from "./enums"
+
+
+
+export interface AuthorizationState {
+	isLoading: boolean,
+	loader: string,
+	activeTab: string,
+	authorizationErrors: {
+		presence: string | null,
+		createUserOrSignIn: string | null,
+		authorizationWithGoogle: string | null
+	}
 }
 
-export interface IsRedirectResultNeededState {
-	isRedirectResultNeeded: boolean
+export interface MainSliceState {
+	sortBy: EnumSortParams,
+	isChatOpen: boolean,
+	isSideBarActive: boolean,
+	isDropdownActive: boolean
 }
 
 export interface SearchPanelState {
@@ -11,7 +25,6 @@ export interface SearchPanelState {
 }
 
 export interface ChatState {
-	isChatOpen: boolean,
 	chatWithId: number | null,
 	focusMessageTimestamp: number | null
 }

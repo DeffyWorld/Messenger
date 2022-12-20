@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setSearchValue } from '../redux/slices/searchPanelSlice';
 import { collection, DocumentData, query, where } from 'firebase/firestore'
 import { useCollectionDataOnce } from 'react-firebase-hooks/firestore';
-import { db } from '../firebase';
+import { firestore } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { getAuth } from 'firebase/auth';
 
@@ -152,7 +152,7 @@ function SearchPanel({ chats, chatsCollection }: Props) {
     }, [currentUser?.email, foundMessages])
 
     const [foundMessagesFromData] = useCollectionDataOnce(
-        query(collection(db, 'users'), where('email', 'in', foundMessagesFrom))
+        query(collection(firestore, 'users'), where('email', 'in', foundMessagesFrom))
     );
 
     const foundMessagesWithUserData = useMemo(() => {

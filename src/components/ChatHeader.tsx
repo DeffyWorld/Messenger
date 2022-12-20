@@ -5,7 +5,7 @@ import { IoIosArrowBack } from 'react-icons/io';
 
 import { collection, query, where } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { db } from '../firebase';
+import { firestore } from '../firebase';
 
 import { useAppDispatch } from '../redux/hooks';
 import { resetChat, resetIsChatOpen } from '../redux/slices/chatSlice';
@@ -101,7 +101,7 @@ interface Props {
 }
 export default function ChatHeader({ chatWith }: Props) {
     const [chatWithData, chatWithDataLoading] = useCollectionData(
-        query(collection(db, 'users'), where('email', '==', chatWith))
+        query(collection(firestore, 'users'), where('email', '==', chatWith))
     );
 
 
