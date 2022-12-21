@@ -3,9 +3,6 @@ import React, { lazy, Suspense, useMemo } from 'react'
 import styled from 'styled-components';
 import 'hamburgers/dist/hamburgers.min.css'
 
-import { IconContext } from 'react-icons';
-import { BiChevronUp, BiChevronDown } from 'react-icons/bi';
-
 import { EnumSortParams } from '../types/enums';
 import { ChatFields, MemberFields } from '../types/interfaces';
 
@@ -127,17 +124,6 @@ export default function Main() {
     const onRootElClick = () => {
         isDropdownActive === true && dispatch(setIsDropdownActive(false));
     }
-
-
-
-
-
-    // SortBy
-
-    
-
-
-
 
 
     // ChatsList
