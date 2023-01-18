@@ -1,32 +1,172 @@
-import React, { lazy, Suspense, useMemo } from 'react'
-
 import styled from 'styled-components';
-import 'hamburgers/dist/hamburgers.min.css'
-
 import { EnumSortParams } from '../types/enums';
-import { ChatFields, MemberFields } from '../types/interfaces';
+import { ChatFields } from '../types/interfaces';
 
-import { firestore } from '../firebase';
+import { useEffect, useMemo } from 'react'
+import { database, firestore } from '../firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { useCollectionData, useCollectionDataOnce } from 'react-firebase-hooks/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { ref } from 'firebase/database';
+import { useListVals } from 'react-firebase-hooks/database';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setIsDropdownActive } from '../redux/slices/mainSlice';
+import { presence } from '../redux/slices/authorizationSlice';
+import { Outlet, useMatch, useNavigate } from 'react-router-dom';
+import { Scrollbars } from 'react-custom-scrollbars-2';
 
-import FakeSearchPanel from '../components/FakeSearchPanel';
-import ChatListItem from '../components/ChatsListItem';
-import Chat from '../components/Chat';
+import ChatListItem from '../components/ChatListItem';
 import Sidebar from '../components/Sidebar';
 import Hamburger from '../components/Hamburger';
 import SortBy from '../components/SortBy';
-
-const SearchPanel = lazy(() => import('../components/SearchPanel'));
-
+import SearchPanel from '../components/SearchPanel';
 
 
 
 
+
+export default function Main() {
+    const auth = getAuth();
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+
+    const [currentUser, currentUserLoading] = useAuthState(auth);
+    const { sortBy, isDropdownActive } = useAppSelector(state => state.main);
+    const chatMatch = useMatch('/chat/:id');
+
+    const onRootElClick = () => {
+        isDropdownActive && dispatch(setIsDropdownActive(false));
+    }
+
+
+
+    const [chatsData,, chatsDataError] = useCollectionData(
+        currentUser !== null && currentUser !== undefined
+            ? query(collection(firestore, 'chats'), where('members', 'array-contains-any', ['user', currentUser.email!]))
+            : undefined
+    )
+    
+    const members: string[] | undefined = useMemo(() => chatsData?.map((chat) => {
+        return chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email)
+    }), [chatsData, currentUser?.email])
+
+    const [membersData,, membersDataError] = useCollectionData(
+        members !== undefined && currentUser !== null && currentUser !== undefined
+            ? query(collection(firestore, 'users'), where('email', 'in', [...members, currentUser.email]))
+            : undefined
+    )
+
+    const [membersStatus,, membersStatusError] = useListVals<any>(ref(database, 'usersStatus'));
+
+    const sortedChatList: ChatFields[] | undefined = useMemo(() => {
+        if (chatsData && membersData && membersStatus && membersData.length - 1 === chatsData.length) {
+            const chatList = chatsData.map((chat) => {
+                const member = chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email);
+                const memberData = membersData.find((memberData) => memberData.email === member);
+                const memberStatusData = membersStatus.find((memberStatus) => memberStatus.email === member);
+                return {
+                    id: chat.id,
+                    lastTimeMembersRead: chat.lastTimeMembersRead,
+                    messages: chat.messages,
+                    memberData: {
+                        displayName: memberData?.displayName,
+                        email: memberData?.email,
+                        photoURL: memberData?.photoURL,
+                        uid: memberData?.uid,
+                        isTyping: memberData?.isTyping,
+                        isOnline: memberStatusData.isOnline,
+                    }
+                }
+            })
+            return chatList.sort((firstValue, secondValue) => {
+                if (sortBy === EnumSortParams.Alphabet) {
+                    const firstValueName = firstValue.memberData!.displayName.split(' ')[0].toLowerCase();
+                    const secondValueName = secondValue.memberData!.displayName.split(' ')[0].toLowerCase();
+    
+                    return firstValueName < secondValueName ? -1 : 1;
+                } else {
+                    const firstValueTime = firstValue.messages[firstValue.messages.length - 1].time;
+                    const secondValueTime = secondValue.messages[secondValue.messages.length - 1].time;
+    
+                    return secondValueTime - firstValueTime;
+                }
+            })
+        }
+    }, [chatsData, currentUser?.email, membersData, membersStatus, sortBy])
+
+
+
+    useEffect(() => {
+        chatsDataError !== undefined && console.error(chatsDataError);
+        membersDataError !== undefined && console.error(membersDataError);
+        membersStatusError !== undefined && console.error(membersStatusError);
+
+    }, [chatsDataError, membersDataError, membersStatusError])
+
+    useEffect(() => {
+        currentUserLoading === false && currentUser === null && navigate('/authorization', { replace: true });
+        currentUser && dispatch(presence({ currentUser: currentUser }));
+
+    }, [currentUser, currentUserLoading, dispatch, navigate])
+
+
+
+    return (<>
+        <Wrapper>
+            <Sidebar isChatOpen={chatMatch !== null} currentUser={currentUser} currentUserLoading={currentUserLoading} />
+
+            <MainWrapper onClick={onRootElClick} isChatOpen={chatMatch !== null} >
+                <Header>
+                    <Title>Messages</Title>
+                    <Hamburger />
+                </Header>
+
+                <SearchPanel
+                    currentUser={currentUser}
+                    currentUserLoading={currentUserLoading}
+                    chatList={sortedChatList}
+                    membersData={membersData}
+                />
+
+                <SortBy isDropdownActive={isDropdownActive} sortBy={sortBy} />
+
+                <ChatsWrapper>
+                    <Scrollbars
+                        autoHide
+                        autoHideDuration={400}
+                        renderView={({ style, ...props }) =>
+                            <div
+                                style={{ ...style, overflowX: 'auto', marginBottom: '0px' }}
+                                {...props}
+                            />
+                        }
+                        renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{width: '4px'}} {...props} />}
+                        renderTrackVertical={props => <TrackVertical {...props} />}
+                    >
+                        {sortedChatList && currentUser && sortedChatList.length !== 0 &&
+                            sortedChatList.map((chat, index) => (
+                                <ChatListItem
+                                    key={`${chat}_${index}`}
+                                    id={chat.id}
+                                    email={chat.memberData!.email!}
+                                    displayName={chat.memberData!.displayName}
+                                    photoURL={chat.memberData!.photoURL}
+                                    isOnline={chat.memberData!.isOnline}
+                                    currentUser={currentUser?.email!}
+                                    message={chat.messages[chat.messages.length - 1]}
+                                    lastTimeMembersRead={chat.lastTimeMembersRead}
+                                />
+                            ))
+                        }
+                    </Scrollbars>
+                </ChatsWrapper>
+            </MainWrapper>
+
+            <Outlet />
+        </Wrapper>
+    </>)
+}
 
 
 
@@ -34,31 +174,13 @@ const SearchPanel = lazy(() => import('../components/SearchPanel'));
 
 const Wrapper = styled.div`
     display: flex;
-
-    .elem-transition-enter {
-        opacity: 0;
-        transform: scale(0);
-    } 
-    .elem-transition-enter-active {
-        opacity: 1;
-        transform: scale(1);
-        transition: 300ms;
-    }
-    .elem-transition-exit {
-        opacity: 1;
-        transform: scale(1);
-    }
-    .elem-transition-exit-active {
-        opacity: 1;
-        transform: scale(0);
-        transition: 300ms;
-    }
 `;
 const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     width: 100vw;
+    height: 100vh;
     position: relative;
     overflow: hidden;
-    padding: 14px;
+    padding: 14px 14px 0px 14px;
     transition: all 400ms ease-in-out;
     background: ${({ theme }) => theme.colors.bgPrimary};
 
@@ -68,17 +190,17 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     `}
 `;
 const ChatsWrapper = styled.div`
-    height: calc(100vh - 124px);
-    overflow-y: auto;
-
-    &::scrollbar {
-        width: 7px;
-    }
-    &::scrollbar-thumb {
-        background-color: #D1D1D1;
-        border-radius: 20px;
-        border: 3px solid #D1D1D1;
-    }
+    height: calc(100vh - 30px - 18px - 50px - 14px);
+`;
+const ThumbVertical = styled.div`
+    background-color: ${({ theme }) => theme.colors.scrollbarThumb};
+    border-radius: 2.5px;
+`;
+const TrackVertical = styled.div`
+    height: 100%;
+    right: 0px;
+    background-color: ${({ theme }) => theme.colors.scrollbarTrack};
+    cursor: pointer;
 `;
 
 
@@ -99,148 +221,3 @@ const Title = styled.h1`
     line-height: 16px;
     color: ${({ theme }) => theme.colors.textPrimary};
 `;
-
-
-
-
-
-
-
-
-
-
-export default function Main() {
-    const dispatch = useAppDispatch();
-    const auth = getAuth();
-    const [currentUser] = useAuthState(auth);
-
-    const { sortBy } = useAppSelector(state => state.main);
-    const { searchValue } = useAppSelector(state => state.searchPanel);
-    const { chatWithId, focusMessageTimestamp } = useAppSelector(state => state.chat);
-    const { isChatOpen, isSideBarActive, isDropdownActive } = useAppSelector(state => state.main);
-
-
-
-    const onRootElClick = () => {
-        isDropdownActive === true && dispatch(setIsDropdownActive(false));
-    }
-
-
-    // ChatsList
-
-    const [chatsCollection] = useCollectionData(
-        query(collection(firestore, 'chats'), where('members', 'array-contains-any', currentUser === null ? ['user'] : ['user', currentUser?.email!]))
-    );
-
-    const membersExludeUser = useMemo(() => {
-        let returnArr: string[] = [''];
-        chatsCollection?.forEach((chat) => {
-            chat.members.forEach((member: string) => {
-                if (member !== 'user' && member !== currentUser?.email) {
-                    returnArr = [...returnArr, member];
-                }
-            })
-        })
-        return returnArr;
-
-    }, [chatsCollection, currentUser?.email])
-
-    const [membersDataCollection] = useCollectionDataOnce(
-        query(collection(firestore, 'users'), where('email', 'in', membersExludeUser))
-    );
-
-    const chats = useMemo(() => {
-        let returnArr: ChatFields[] = [];
-        let membersData: MemberFields[] = []
-
-        chatsCollection?.forEach((chat, chatIndex) => {
-            membersDataCollection?.forEach((memberData, memberDataIndex) => {
-                chat.members.forEach((member: MemberFields) => {
-                    if (memberData.email === member) {
-                        membersData = [{
-                            uid: memberData.uid,
-                            displayName: memberData.displayName,
-                            photo: memberData.photoURL,
-                            isTyping: memberData.isTyping,
-                            wasOnline: memberData.wasOnline,
-                            email: memberData.email
-                        }];
-                        returnArr = [...returnArr, {
-                            id: chat.id,
-                            lastTimeMembersRead: chat.lastTimeMembersRead,
-                            messages: chat.messages,
-                            membersData: membersData
-                        }];
-                    }
-                })
-            })
-        })
-
-        return returnArr;
-
-    }, [chatsCollection, membersDataCollection])
-
-    const sortedChats = useMemo(() => chats.sort((firstValue, secondValue) => {
-        if (sortBy === EnumSortParams.Alphabet) {
-            const firstValueName = firstValue.membersData![0].displayName.split(' ')[0].toLowerCase();
-            const secondValueName = secondValue.membersData![0].displayName.split(' ')[0].toLowerCase();
-
-            return firstValueName < secondValueName ? -1 : 1;
-        } else {
-            const firstValueTime = firstValue.messages[firstValue.messages.length - 1].time;
-            const secondValueTime = secondValue.messages[secondValue.messages.length - 1].time;
-            return secondValueTime - firstValueTime;
-        }
-
-    }), [chats, sortBy])
-
-
-
-
-
-    return (
-        <Wrapper>
-            <Sidebar currentUser={currentUser!} auth={auth} isSideBarActive={isSideBarActive} />
-
-            <MainWrapper onClick={onRootElClick} isChatOpen={isChatOpen} >
-                <Header>
-                    <Title>Messages</Title>
-
-                    <Hamburger dispatch={dispatch} isSideBarActive={isSideBarActive} />
-                </Header>
-
-                {searchValue !== '' ?
-                    <Suspense fallback={<FakeSearchPanel />}>
-                        <SearchPanel chats={chats} chatsCollection={chatsCollection} />
-                    </Suspense>
-                    :
-                    <FakeSearchPanel />
-                }
-
-                <SortBy dispatch={dispatch} isDropdownActive={isDropdownActive} sortBy={sortBy} />
-
-
-
-                <ChatsWrapper>
-                    {sortedChats.map((chat, index) => (
-                        <ChatListItem
-                            key={`${chat}_${index}`}
-                            id={chat.id}
-                            email={chat.membersData![0].email!}
-                            displayName={chat.membersData![0].displayName}
-                            photoURL={chat.membersData![0].photo}
-                            wasOnline={chat.membersData![0].wasOnline!}
-                            currentUser={currentUser?.email!.split('.')[0]}
-                            message={chat.messages[chat.messages.length - 1]}
-                            lastTimeMembersRead={chat.lastTimeMembersRead}
-                        />
-                    ))}
-                </ChatsWrapper>
-            </MainWrapper>
-
-            {chatWithId !== null &&
-                <Chat id={chatWithId!} focusMessageTimestamp={focusMessageTimestamp!} />
-            }
-        </Wrapper>
-    )
-}

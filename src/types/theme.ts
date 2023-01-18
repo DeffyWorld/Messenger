@@ -14,6 +14,8 @@ export interface Theme {
 		searchPanelBg: string,
 		messageBg: string,
 		messageFromCurrentUserBg: string,
+		scrollbarThumb: string,
+		scrollbarTrack: string
 		
 		disabled: string,
 		status: string,

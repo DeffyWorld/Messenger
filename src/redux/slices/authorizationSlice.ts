@@ -1,12 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { AuthorizationFormInputs, AuthorizationState } from "../../types/interfaces";
+import { EnumThunkStatus } from "../../types/enums";
 
 import { Auth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithEmailAndPassword, signInWithRedirect, updateProfile, User } from "firebase/auth";
 import { collection, doc, getDoc, setDoc } from "firebase/firestore";
 import { database, firestore } from "../../firebase";
 import { ref, onValue, onDisconnect, set } from "firebase/database";
-import { NavigateFunction } from "react-router-dom";
 
 
 
@@ -17,11 +17,14 @@ export const presence = createAsyncThunk<any, { currentUser: User }, { rejectVal
         const userStatusDatabaseRef = ref(database, `usersStatus/${currentUser.uid}`);
 
         const isOfflineForDatabase = {
+            email: currentUser.email,
             isOnline: false,
             wasOnline: Date.now(),
         };
         const isOnlineForDatabase = {
+            user: currentUser.email,
             isOnline: true,
+            wasOnline: 0,
         };
 
         onValue(ref(database, '.info/connected'), (snap) => {
@@ -42,15 +45,13 @@ export const presence = createAsyncThunk<any, { currentUser: User }, { rejectVal
 
 export const createUserOrSignIn = createAsyncThunk<any, {
     auth: Auth,
-    navigate: NavigateFunction,
     activeTab: string,
     data: AuthorizationFormInputs,
 }, { rejectValue: string }>(
-    'authorization/createUserOrSignIn', async ({ auth, navigate, activeTab, data }, { rejectWithValue }) => {
+    'authorization/createUserOrSignIn', async ({ auth, activeTab, data }, { rejectWithValue }) => {
         if (activeTab === 'logIn') {
             return signInWithEmailAndPassword(auth, data.email, data.password)
                 .then(() => {
-                    navigate('/', { replace: true });
                     return
                 })
                 .catch((error) => {
@@ -66,9 +67,9 @@ export const createUserOrSignIn = createAsyncThunk<any, {
                     photoURL: userCredential.user.photoURL !== '' && userCredential.user.photoURL === 'null'
                         ? `${userCredential.user.photoURL}`
                         : 'https://pmdoc.ua/wp-content/uploads/default-avatar.png',
-                    uid: `${userCredential.user.uid}`
+                    uid: `${userCredential.user.uid}`,
+                    isTyping: false
                 })
-                navigate('/', { replace: true });
                 return
             } catch (error: any) {
                 return rejectWithValue(error.code);
@@ -81,9 +82,8 @@ export const authorizationWithGoogle = createAsyncThunk<any, {
     isRedirectResultNeeded: boolean,
     auth: Auth,
     currentUser?: User,
-    navigate?: NavigateFunction,
 }, { rejectValue: string }>(
-    'authorization/authorizationWithGoogle', async ({ isRedirectResultNeeded, auth, currentUser, navigate }, { rejectWithValue }) => {
+    'authorization/authorizationWithGoogle', async ({ isRedirectResultNeeded, auth, currentUser }, { rejectWithValue }) => {
         if (isRedirectResultNeeded === false) {
             const provider = new GoogleAuthProvider();
             return signInWithRedirect(auth, provider)
@@ -102,9 +102,9 @@ export const authorizationWithGoogle = createAsyncThunk<any, {
                     photoURL: currentUser!.photoURL !== '' && currentUser!.photoURL !== null
                         ? currentUser!.photoURL
                         : 'https://pmdoc.ua/wp-content/uploads/default-avatar.png',
-                    uid: currentUser!.uid
+                    uid: currentUser!.uid,
+                    isTyping: false
                 })
-                navigate!('/', { replace: true });
                 return
             } catch (error: any) {
                 return rejectWithValue(error.code);
@@ -120,6 +120,7 @@ const initialState: AuthorizationState = {
     isLoading: false,
     loader: '.',
     activeTab: 'logIn',
+    authorizationStatus: null,
     authorizationErrors: {
         presence: null,
         createUserOrSignIn: null,
@@ -145,23 +146,30 @@ export const authorizationSlice = createSlice({
             })
 
             .addCase(createUserOrSignIn.pending, (state) => {
+                state.authorizationStatus = EnumThunkStatus.Pending;
                 state.isLoading = true;
             })
             .addCase(createUserOrSignIn.fulfilled, (state) => {
+                state.authorizationStatus = EnumThunkStatus.Fulfilled;
                 state.isLoading = false;
             })
             .addCase(createUserOrSignIn.rejected, (state, action) => {
+                state.authorizationStatus = EnumThunkStatus.Rejected;
                 state.isLoading = false;
+                state.authorizationErrors.createUserOrSignIn = action.payload!;
                 console.error(action.payload)
             })
 
             .addCase(authorizationWithGoogle.pending, (state) => {
+                state.authorizationStatus = EnumThunkStatus.Pending;
                 state.isLoading = true;
             })
             .addCase(authorizationWithGoogle.fulfilled, (state) => {
+                state.authorizationStatus = EnumThunkStatus.Fulfilled;
                 state.isLoading = false;
             })
             .addCase(authorizationWithGoogle.rejected, (state, action) => {
+                state.authorizationStatus = EnumThunkStatus.Rejected;
                 state.isLoading = false;
                 state.authorizationErrors.authorizationWithGoogle = action.payload!;
                 console.error(action.payload)

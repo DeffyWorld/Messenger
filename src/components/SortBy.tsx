@@ -1,81 +1,30 @@
-import React from 'react'
-
 import styled from 'styled-components';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 
 import { EnumSortParams } from '../types/enums';
 
 import { IconContext } from 'react-icons';
+import { useAppDispatch } from '../redux/hooks';
 import { setIsDropdownActive, setSortBy } from '../redux/slices/mainSlice';
 
 
 
 
 
-
-
-
-
-
-const SortByWrapper = styled.div`
-    margin: 46px 0px 4px 13px;
-    gap: 4px;
-    display: flex;
-`;
-const SortByText = styled.p`
-    font-family: 'SFPro';
-    font-weight: 400;
-    font-size: 13px;
-    line-height: 16px;
-    white-space: nowrap;
-    color: ${({ theme }) => theme.colors.textSecondary};
-`;
-const DropdownWrapper = styled.div`
-    position: relative;
-`;
-const Dropdown = styled.div<{ isDropdownActive: boolean }>`
-    display: none;
-
-    ${({ isDropdownActive }) => isDropdownActive && `
-        position: absolute;
-        display: block;
-    `}
-`;
-const SortByParam = styled.div`
-    font-family: 'SFPro';
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 16px;
-    color: #2D9CDB;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-`;
-
-
-
-
-
-
-
-
-
-
 interface Props {
-    dispatch: any,
     isDropdownActive: boolean
     sortBy: EnumSortParams
 }
-export default function SortBy({ dispatch, isDropdownActive, sortBy }: Props) {
+export default function SortBy({ isDropdownActive, sortBy }: Props) {
+    const dispatch = useAppDispatch();
     const sortParams = [EnumSortParams.Alphabet, EnumSortParams.Newest];
 
     const toggleDropdown = () => {
-        setIsDropdownActive(!isDropdownActive);
+        dispatch(setIsDropdownActive(!isDropdownActive));
     }
-    const toggleSortByParam = (param: string) => {
-        dispatch(setSortBy(param));
-        setIsDropdownActive(false);
+    const toggleSortByParam = (param: EnumSortParams) => {
+        dispatch(setSortBy(param))
+        dispatch(setIsDropdownActive(false));
     }
 
 
@@ -85,7 +34,7 @@ export default function SortBy({ dispatch, isDropdownActive, sortBy }: Props) {
                     <SortByText>Sort by</SortByText>
 
                     <DropdownWrapper>
-                        <SortByParam onClick={toggleDropdown} >
+                        <SortByParam active onClick={toggleDropdown} >
                             {sortBy}
                             <IconContext.Provider value={{ style: { margin: '2px 0 0 0' } }}>
                                 {isDropdownActive
@@ -108,3 +57,55 @@ export default function SortBy({ dispatch, isDropdownActive, sortBy }: Props) {
                 </SortByWrapper>
     )
 }
+
+
+
+
+
+const SortByWrapper = styled.div`
+    margin: 12px 0px 4px 12px;
+    gap: 4px;
+    display: inline-flex;
+    position: relative;
+    z-index: 10;
+`;
+const SortByText = styled.p`
+    font-family: 'SFPro';
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 16px;
+    white-space: nowrap;
+    color: ${({ theme }) => theme.colors.textSecondary};
+`;
+const DropdownWrapper = styled.div`
+    position: relative;
+    cursor: pointer;
+`;
+const Dropdown = styled.div<{ isDropdownActive: boolean }>`
+    display: none;
+
+    ${({ isDropdownActive }) => isDropdownActive && `
+        position: absolute;
+        display: block;
+    `}
+`;
+const SortByParam = styled.div<{active?: boolean}>`
+    font-family: 'SFPro';
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 16px;
+    color: ${({ theme }) => theme.colors.disabled};
+    transition: 200ms all ease;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ${({ active }) => active === true && `
+        color: #2D9CDB;
+    `}
+
+    &:hover {
+        color: #2D9CDB;
+    }
+`;

@@ -1,24 +1,70 @@
-import React from 'react'
-
 import styled from 'styled-components';
 import { IoIosArrowBack } from 'react-icons/io';
-
-import { collection, query, where } from 'firebase/firestore';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { firestore } from '../firebase';
-
-import { useAppDispatch } from '../redux/hooks';
-import { resetChat, resetIsChatOpen } from '../redux/slices/chatSlice';
+import { useNavigate } from 'react-router-dom';
+import { memo } from 'react';
 
 
 
 
 
+interface Props {
+    photoURL: string,
+    displayName: string,
+    isTyping: boolean,
+    isOnline: boolean,
+    wasOnline: number
+}
+function ChatHeader({ photoURL, displayName, isTyping, isOnline, wasOnline }: Props) {
+    const dateNow = Date.now();
+    const dateWasOnline = new Date(wasOnline);
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    
+    const navigate = useNavigate();
+
+    const onBackButtonClick = () => {
+        navigate('/');
+    }
 
 
 
+    return (
+        <Header>
+            <Back>
+                <IoIosArrowBack onClick={onBackButtonClick} />
+            </Back>
 
+            <Photo photo={photoURL} />
 
+            <TextWrapper>
+                <DisplayName>
+                    {displayName}
+                </DisplayName>
+
+                {isOnline === true
+                    ? isTyping === true
+                        ? <Status>Typing...</Status>
+                        : <Status>Online</Status>
+                    : dateNow - wasOnline < 3600000
+                        ? dateNow - wasOnline < 60000
+                            ? <WasOnline>last seen just now</WasOnline>
+                            : <WasOnline>last seen {Math.floor((dateNow - wasOnline) / 1000 / 60)} minutes ago</WasOnline>
+                        : dateNow - wasOnline < 86400000
+                            ? <WasOnline>last seen at {dateWasOnline.toLocaleTimeString().split('', 5).join('')}</WasOnline>
+                            : dateNow - wasOnline < 172800000
+                                ? <WasOnline>last seen yesterday</WasOnline>
+                                : dateNow - wasOnline < 604800000
+                                    ? <WasOnline>last seen at {dayNames[dateWasOnline.getDay()]}</WasOnline>
+                                    : dateNow - wasOnline < 31556926000
+                                        ? <WasOnline>last seen at {monthNames[dateWasOnline.getMonth()]}{' '}{dateWasOnline.getDate()}</WasOnline>
+                                        : <WasOnline>last seen at {dateWasOnline.toLocaleDateString()}</WasOnline>
+                }
+            </TextWrapper>
+        </Header>
+    )
+}
+
+export default memo(ChatHeader);
 
 
 
@@ -81,74 +127,3 @@ const WasOnline = styled.div`
     line-height: 16px;
     color: ${({ theme }) => theme.colors.textSecondary};
 `;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-interface Props {
-    chatWith: string
-}
-export default function ChatHeader({ chatWith }: Props) {
-    const [chatWithData, chatWithDataLoading] = useCollectionData(
-        query(collection(firestore, 'users'), where('email', '==', chatWith))
-    );
-
-
-    const dispatch = useAppDispatch();
-    const onBackButtonClick = () => {
-        dispatch(resetIsChatOpen());
-        setTimeout(() => {
-            dispatch(resetChat());
-        }, 400)
-    }
-
-
-    return (
-        !chatWithDataLoading ?
-            <Header>
-                <Back>
-                    <IoIosArrowBack onClick={onBackButtonClick} />
-                </Back>
-
-                <Photo photo={chatWithData![0].photoURL} />
-
-                <TextWrapper>
-                    <DisplayName>
-                        {chatWithData![0].displayName}
-                    </DisplayName>
-
-                    {Date.now() + 5500 < chatWithData![0].wasOnline || chatWithData![0].wasOnline === 0
-                        ? chatWithData![0].isTyping
-                            ? <Status>Typing...</Status>
-                            : <Status>Online</Status>
-                        : Date.now() - chatWithData![0].wasOnline < 3600000
-                            ? Date.now() - chatWithData![0].wasOnline < 60000
-                                ? <WasOnline>last seen just now</WasOnline>
-                                : <WasOnline>last seen {Math.floor((Date.now() - chatWithData![0].wasOnline) / 1000 / 60)} minutes ago</WasOnline>
-                            : Date.now() - chatWithData![0].wasOnline < 86400000
-                                ? <WasOnline>last seen at {new Date(chatWithData![0].wasOnline).toLocaleTimeString().split('', 5).join('')}</WasOnline>
-                                : Date.now() - chatWithData![0].wasOnline < 172800000
-                                    ? <WasOnline>last seen yesterday</WasOnline>
-                                    : Date.now() - chatWithData![0].wasOnline < 604800000
-                                        ? <WasOnline>last seen at {new Date(chatWithData![0].wasOnline).toDateString().split(' ')[0]}</WasOnline>
-                                        : Date.now() - chatWithData![0].wasOnline < 31556926000
-                                            ? <WasOnline>last seen at {new Date(chatWithData![0].wasOnline).toDateString().split(' ', 2)[1]}</WasOnline>
-                                            : <WasOnline>last seen at {new Date(chatWithData![0].wasOnline).toLocaleDateString()}</WasOnline>
-                    }
-                </TextWrapper>
-            </Header>
-        :
-            <></>
-    )
-}

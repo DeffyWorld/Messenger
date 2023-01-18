@@ -1,8 +1,36 @@
-import React from 'react'
-
 import styled from 'styled-components';
+import 'hamburgers/dist/hamburgers.min.css'
 
-import { setIsSideBarActive } from '../redux/slices/mainSlice';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setIsSidebarActive } from '../redux/slices/sidebarSlice';
+
+
+
+
+
+export default function Hamburger() {
+    const dispatch = useAppDispatch();
+    const { isSidebarActive } = useAppSelector(state => state.sidebar);
+
+    const onHamburgerClick = () => {
+        dispatch(setIsSidebarActive(!isSidebarActive));
+    }
+
+
+
+    return (
+        <HamburgerWrapper onClick={onHamburgerClick} >
+            <button
+                className={isSidebarActive ? "hamburger hamburger--slider is-active" : "hamburger hamburger--slider"}
+                type="button"
+            >
+                <span className="hamburger-box">
+                    <span className="hamburger-inner"></span>
+                </span>
+            </button>
+        </HamburgerWrapper>
+    )
+}
 
 
 
@@ -19,32 +47,3 @@ const HamburgerWrapper = styled.div`
         background-color: ${({ theme }) => theme.colors.textPrimary};
     }
 `;
-
-
-
-
-
-interface Props {
-    dispatch: any,
-    isSideBarActive: boolean
-}
-export default function Hamburger({ dispatch, isSideBarActive }: Props) {
-    const onHamburgerClick = () => {
-        dispatch(setIsSideBarActive());
-    }
-
-
-
-    return (
-        <HamburgerWrapper onClick={onHamburgerClick} >
-            <button
-                className={isSideBarActive ? "hamburger hamburger--slider is-active" : "hamburger hamburger--slider"}
-                type="button"
-            >
-                <span className="hamburger-box">
-                    <span className="hamburger-inner"></span>
-                </span>
-            </button>
-        </HamburgerWrapper>
-    )
-}

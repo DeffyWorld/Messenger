@@ -12,27 +12,28 @@ import {
 } from 'redux-persist';
 
 import { authorizationSlice } from "./slices/authorizationSlice";
+import { chatSlice } from "./slices/chatSlice";
 import { mainSlice } from "./slices/mainSlice";
 import { searchPanelSlice } from "./slices/searchPanelSlice";
-import { chatSlice } from "./slices/chatSlice";
+import { sidebarSlice } from "./slices/sidebarSlice";
 
 
 
 const rootPersistConfig = {
     key: 'root',
     storage: localForage,
-    whitelist: ['main', 'chat']
+    blacklist: ['searchPanel', 'chat']
 };
-
-const authorizationPersistConfig = {
+const authorizationSlicePersistConfig = {
     key: 'authorization',
     storage: localForage,
     blacklist: ['authorizationErrors', 'loader']
 };
 
 const rootReducer = combineReducers({
-    authorization: persistReducer(authorizationPersistConfig, authorizationSlice.reducer),
+    authorization: persistReducer(authorizationSlicePersistConfig, authorizationSlice.reducer),
     main: mainSlice.reducer,
+    sidebar: sidebarSlice.reducer,
     searchPanel: searchPanelSlice.reducer,
     chat: chatSlice.reducer
 });

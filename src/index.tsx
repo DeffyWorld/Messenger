@@ -1,50 +1,68 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+import './firebase';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import store, { persistor } from './redux/store';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { Reset } from 'styled-reset';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Theme } from './types/theme';
-import './firebase';
 import App from './App';
+
+
+
+import SFPro400woff from './assets/fonts/SFPro/SFProDisplay-Regular.woff';
+import SFPro400woff2 from './assets/fonts/SFPro/SFProDisplay-Regular.woff2';
+import SFPro500woff from './assets/fonts/SFPro/SFProDisplay-Medium.woff';
+import SFPro500woff2 from './assets/fonts/SFPro/SFProDisplay-Medium.woff2';
+import SFPro700woff from './assets/fonts/SFPro/SFProDisplay-Bold.woff';
+import SFPro700woff2 from './assets/fonts/SFPro/SFProDisplay-Bold.woff2';
+import SFPro800woff from './assets/fonts/SFPro/SFProDisplay-Black.woff';
+import SFPro800woff2 from './assets/fonts/SFPro/SFProDisplay-Black.woff2';
+import { BrowserRouter } from 'react-router-dom';
+
 
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
 
 
+
 const Global = createGlobalStyle`
 	* {
 		box-sizing: border-box;
 	}
+	body {
+		overflow: hidden;
+	}
+
 	@font-face {
 		font-family: "SFPro";
 		font-weight: 400;
-		src: url(${require('./assets/fonts/SFPro/SFProDisplay-Regular.woff')}) format("woff"),
-			url(${require('./assets/fonts/SFPro/SFProDisplay-Regular.woff2')}) format("woff2");
+		src: url(${SFPro400woff}) format("woff"),
+			url(${SFPro400woff2}) format("woff2");
 	}
 	@font-face {
 		font-family: "SFPro";
 		font-weight: 500;
-		src: url(${require('./assets/fonts/SFPro/SFProDisplay-Medium.woff')}) format("woff"),
-			url(${require('./assets/fonts/SFPro/SFProDisplay-Medium.woff2')}) format("woff2");
+		src: url(${SFPro500woff}) format("woff"),
+			url(${SFPro500woff2}) format("woff2");
 	}
 	@font-face {
 		font-family: "SFPro";
 		font-weight: 700;
-		src: url(${require('./assets/fonts/SFPro/SFProDisplay-Bold.woff')}) format("woff"),
-			url(${require('./assets/fonts/SFPro/SFProDisplay-Bold.woff2')}) format("woff2");
+		src: url(${SFPro700woff}) format("woff"),
+			url(${SFPro700woff2}) format("woff2");
 	}
 	@font-face {
 		font-family: 'SFPro';
 		font-weight: 800;
-		src: url(${require('./assets/fonts/SFPro/SFProDisplay-Black.woff')}) format("woff"),
-			url(${require('./assets/fonts/SFPro/SFProDisplay-Black.woff2')}) format("woff2");
+		src: url(${SFPro800woff}) format("woff"),
+			url(${SFPro800woff2}) format("woff2");
     }
 `
+
 const theme: Theme = {
 	colors: {
 		authorizationBg: '#e7f6f8',
@@ -58,7 +76,9 @@ const theme: Theme = {
 		textPrimary: '#000000',
 		textSecondary: '#403A4B',
 		messageBg: '#F4F4F7',
-		messageFromCurrentUserBg: '#BEEEE6',
+		messageFromCurrentUserBg: '#9febe9',
+		scrollbarThumb: '#9e9c9d',
+		scrollbarTrack: '#d6d4d7',
 
 		disabled: '#b1b1b1',
 		status: '#27AE60',
@@ -78,17 +98,16 @@ const theme: Theme = {
 	}
 }
 
-
 root.render(
 	<React.StrictMode>
-		<Provider store={store}>
-			<PersistGate loading={null} persistor={persistor}>
+		<Provider store={store} >
+			<PersistGate loading={null} persistor={persistor} >
 				<ThemeProvider theme={theme} >
-					<Router>
+					<BrowserRouter>
 						<Reset />
 						<Global />
 						<App />
-					</Router>
+					</BrowserRouter>
 				</ThemeProvider>
 			</PersistGate>
 		</Provider>

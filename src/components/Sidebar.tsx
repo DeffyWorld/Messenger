@@ -1,30 +1,125 @@
-import React, { useState, useRef } from 'react'
-
 import styled from 'styled-components';
 import { RiQuillPenFill, RiSettings5Fill } from 'react-icons/ri';
 import { MdOutlineLogout } from 'react-icons/md';
 import { GrFormClose } from 'react-icons/gr';
-
-import { CSSTransition } from 'react-transition-group';
-import { Auth, User } from 'firebase/auth';
+import { useState, useRef, memo } from 'react'
+import { getAuth, User } from 'firebase/auth';
 import { arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '../firebase';
+import { useAppSelector } from '../redux/hooks';
 
 
 
 
 
+interface Props {
+    isChatOpen: boolean,
+    currentUser: User | null | undefined,
+    currentUserLoading: boolean
+}
+function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
+    const auth = getAuth();
+
+    const [isStartMessagingOpen, setIsStartMessagingOpen] = useState<boolean>(false);
+    const { isSidebarActive } = useAppSelector(state => state.sidebar);
+    const inputValue = useRef('');
+
+    const inputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+        inputValue.current = event.target.value;
+    }
+
+    const startMessagingOpenHandler = () => {
+        setIsStartMessagingOpen(!isStartMessagingOpen);
+    }
+
+    const confirmHandler = async () => {
+        const id = Date.now();
+
+        await setDoc(doc(firestore, "chats", `${id}`), {
+            id: id,
+            lastTimeMembersRead: {},
+            members: [currentUser!.email, inputValue.current],
+            messages: arrayUnion({
+                chatId: id,
+                content: 'Hello!',
+                from: currentUser!.email,
+                time: Date.now(),
+                type: 'text'
+            })
+        })
+
+        const currentUserEmail = currentUser!.email!.split('.')[0];
+        const inputEmail = inputValue.current.split('.')[0];
+        await updateDoc(doc(firestore, 'chats', `${id}`), {
+            [`lastTimeMembersRead.${currentUserEmail}`]: 0,
+            [`lastTimeMembersRead.${inputEmail}`]: 0
+        })
+
+        inputValue.current = '';
+        setIsStartMessagingOpen(false);
+    }
+
+    const logOut = () => {
+        auth.signOut();
+    }
+
+
+    if (currentUserLoading === false && currentUser === null) {
+        return (
+            <SidebarWrapper isSidebarActive={isSidebarActive} isChatOpen={isChatOpen} >
+                <Settings>
+                    <RiSettings5Fill />
+                </Settings>
+
+                <Pen >
+                    <RiQuillPenFill />
+                </Pen>
+
+                <LogOut >
+                    <MdOutlineLogout />
+                </LogOut>
+            </SidebarWrapper>
+        )
+    }
+
+    return (<>
+        <SidebarWrapper isSidebarActive={isSidebarActive} isChatOpen={isChatOpen} >
+            <Settings>
+                <RiSettings5Fill />
+            </Settings>
+
+            <Pen onClick={startMessagingOpenHandler} >
+                <RiQuillPenFill />
+            </Pen>
+
+            <LogOut onClick={logOut} >
+                <MdOutlineLogout />
+            </LogOut>
+        </SidebarWrapper>
+
+
+
+        <StartMessagingBg isStartMessagingOpen={isStartMessagingOpen} >
+            <StartMessaging>
+                <Input placeholder='Start messaging with...' onChange={inputHandler} />
+
+                <Confirm onClick={confirmHandler} >Confirm</Confirm>
+
+                <Close onClick={startMessagingOpenHandler} >
+                    <GrFormClose />
+                </Close>
+            </StartMessaging>
+        </StartMessagingBg>
+    </>)
+}
+
+export default memo(Sidebar)
 
 
 
 
 
-
-
-
-
-
-const SidebarWrapper = styled.div<{ isSideBarActive: boolean }>`
+const SidebarWrapper = styled.div<{ isSidebarActive: boolean, isChatOpen: boolean }>`
     position: relative;
     height: 100vh;
     width: 64px;
@@ -35,7 +130,7 @@ const SidebarWrapper = styled.div<{ isSideBarActive: boolean }>`
     background-color: ${({ theme }) => theme.colors.bgSecondary};
     transition: 300ms all ease-in-out;
 
-    ${({ isSideBarActive }) => !isSideBarActive && `
+    ${({ isSidebarActive, isChatOpen }) => (!isSidebarActive || isChatOpen) && `
         width: 0px;
         padding: 6px 0px;
         z-index: -1;
@@ -81,7 +176,7 @@ const Pen = styled.div`
 
 
 
-const StartMessagingWithBg = styled.div<{ isStartMessagingWithOpen: boolean }>`
+const StartMessagingBg = styled.div<{ isStartMessagingOpen: boolean }>`
     position: absolute;
     z-index: -10;
     width: 100vw;
@@ -92,12 +187,12 @@ const StartMessagingWithBg = styled.div<{ isStartMessagingWithOpen: boolean }>`
     background-color: rgba(0, 0, 0, 0);
     transition: 300ms all ease;
 
-    ${({ isStartMessagingWithOpen }) => isStartMessagingWithOpen && `
+    ${({ isStartMessagingOpen }) => isStartMessagingOpen && `
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 500;
     `}
 `;
-const StartMessagingWith = styled.div`
+const StartMessaging = styled.div`
     position: absolute;
     z-index: 600;
     padding: 24px;
@@ -149,110 +244,3 @@ const Close = styled.div`
         transform: scale(1.1);
     }
 `;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-interface Props {
-    auth: Auth,
-    currentUser: User,
-    isSideBarActive: boolean
-}
-export default function Sidebar({ currentUser, auth, isSideBarActive }: Props) {
-    const [isStartMessagingWithOpen, setIsStartMessagingWithOpen] = useState<boolean>(false);
-    const [inputValue, setInputValue] = useState<string>('');
-    const ref = useRef(null);
-
-    const inputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setInputValue(event.target.value);
-    }
-
-    const startMessagingWithOpenHandler = () => {
-        setIsStartMessagingWithOpen(!isStartMessagingWithOpen);
-    }
-
-    const confirmHandler = async () => {
-        const id = Date.now();
-
-        await setDoc(doc(firestore, "chats", `${id}`), {
-            id: id,
-            lastTimeMembersRead: {},
-            members: [currentUser.email, inputValue],
-            messages: arrayUnion({
-                chatId: id,
-                content: 'Hello!',
-                from: currentUser.email,
-                time: Date.now(),
-                type: 'text'
-            }) 
-        })
-
-        const currentUserEmail = currentUser.email!.split('.')[0];
-        const inputValueEmail = inputValue.split('.')[0];
-        await updateDoc(doc(firestore, 'chats', `${id}`), {
-            [`lastTimeMembersRead.${currentUserEmail}`]: 0,
-            [`lastTimeMembersRead.${inputValueEmail}`]: 0
-        })
-
-        setInputValue('');
-        setIsStartMessagingWithOpen(false);
-    }
-
-    const logOut = () => {
-        auth.signOut();
-    }
-
-
-
-    return (
-        <>
-            <SidebarWrapper isSideBarActive={isSideBarActive} >
-                <Settings>
-                    <RiSettings5Fill />
-                </Settings>
-
-                <Pen onClick={startMessagingWithOpenHandler} >
-                    <RiQuillPenFill />
-                </Pen>
-
-                <LogOut onClick={logOut} >
-                    <MdOutlineLogout />
-                </LogOut>
-            </SidebarWrapper>
-
-
-
-            <StartMessagingWithBg isStartMessagingWithOpen={isStartMessagingWithOpen} >
-                <CSSTransition
-                    nodeRef={ref}
-                    classNames="elem-transition"
-                    in={isStartMessagingWithOpen}
-                    timeout={300}
-                    mountOnEnter
-                    unmountOnExit
-                >
-                    <StartMessagingWith ref={ref} >
-                        <Input placeholder='Start messaging with...' value={inputValue} onChange={inputHandler} />
-
-                        <Confirm onClick={confirmHandler} >Confirm</Confirm>
-
-                        <Close onClick={startMessagingWithOpenHandler} >
-                            <GrFormClose />
-                        </Close>
-                    </StartMessagingWith>
-                </CSSTransition>
-            </StartMessagingWithBg>
-        </>
-    )
-}

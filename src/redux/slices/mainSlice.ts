@@ -7,23 +7,14 @@ import { EnumSortParams } from "../../types/enums"
 
 const initialState: MainSliceState = {
     sortBy: EnumSortParams.Newest,
-    isChatOpen: false,
-    isSideBarActive: false,
     isDropdownActive: false
 }
-export const mainSlice = createSlice ({
+export const mainSlice = createSlice({
     name: 'main',
     initialState,
     reducers: {
         setSortBy(state, action) {
-            state.sortBy = action.payload
-        },
-        setIsChatOpen(state, action) {
-            state.isChatOpen = action.payload;
-            state.isSideBarActive = false;
-        },
-        setIsSideBarActive(state) {
-            state.isSideBarActive = !state.isSideBarActive;
+            state.sortBy = action.payload;
         },
         setIsDropdownActive(state, action) {
             state.isDropdownActive = action.payload;
@@ -33,4 +24,4 @@ export const mainSlice = createSlice ({
 
 
 
-export const { setSortBy, setIsChatOpen, setIsSideBarActive, setIsDropdownActive } = mainSlice.actions;
+export const { setSortBy, setIsDropdownActive } = mainSlice.actions;

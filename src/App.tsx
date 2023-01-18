@@ -1,36 +1,24 @@
-import React, { useLayoutEffect } from 'react';
-
-import { Route, Routes, useNavigate } from 'react-router-dom';
-import { getAuth } from 'firebase/auth';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { useAppDispatch } from './redux/hooks';
-import { presence } from './redux/slices/authorizationSlice';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import Authorization from './pages/Authorization';
 import Main from './pages/Main';
+import Chat from './pages/Chat';
 import Settings from './pages/Settings';
+import NotExist from './pages/NotExist';
 
 
 
 export default function App() {
-	const navigate = useNavigate();
-	const auth = getAuth();
-	const [currentUser, currentUserLoading] = useAuthState(auth);
-	const dispatch = useAppDispatch();
-
-	useLayoutEffect(() => {
-		!currentUserLoading && currentUser === null && navigate('authorization', { replace: true });
-		!currentUserLoading && currentUser !== null && dispatch(presence({ currentUser: currentUser! })); 
-
-	}, [currentUser, currentUserLoading, dispatch, navigate])
-
-
-
 	return (
 		<Routes>
-			<Route path='/' element={<Main />} />
+			<Route path='/' element={<Main />} >
+				<Route path='chat' element={<Navigate to='/' replace />} />
+				<Route path='chat/:chatId' element={<Chat />} />
+			</Route>
+
 			<Route path='/authorization' element={<Authorization />} />
 			<Route path='/settings' element={<Settings />} />
+			<Route path="*" element={<NotExist />} />
 		</Routes>
 	);
 }

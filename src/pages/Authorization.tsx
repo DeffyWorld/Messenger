@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import styled from 'styled-components';
 import { IconContext } from 'react-icons';
@@ -10,13 +10,297 @@ import { AuthorizationFormInputs } from '../types/interfaces';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, getRedirectResult } from "firebase/auth";
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { authorizationWithGoogle, createUserOrSignIn, setActiveTab, setLoader } from '../redux/slices/authorizationSlice';
+import { EnumThunkStatus } from '../types/enums';
 
 
 
 
 
+export default function Authorization() {
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const auth = getAuth();
+    const [currentUser, currentUserLoading] = useAuthState(auth);
+
+    const { isLoading, loader, activeTab, authorizationStatus, authorizationErrors } = useAppSelector(state => state.authorization);
+    const {
+        register,
+        formState: { errors, dirtyFields },
+        handleSubmit,
+        watch,
+        setError,
+        clearErrors
+    } = useForm<AuthorizationFormInputs>({
+        mode: "all"
+    });
+
+
+
+    const tabHandler = () => {
+        activeTab === 'logIn' ? dispatch(setActiveTab('signIn')) : dispatch(setActiveTab('logIn'));
+        if (errors.email?.message === 'User not found' || errors.email?.message === 'User with this email already exists' || errors.password?.message === 'Wrong password') {
+            clearErrors();
+        }
+    }
+
+    const currentPassword = watch('password');
+    const [inputType, setInputType] = useState('password');
+
+    const changeInputType = () => {
+        inputType === 'password' ? setInputType('text') : setInputType('password');
+    }
+    const enterClickHandler = (event: React.KeyboardEvent) => {
+        event.code === 'Enter' && handleSubmit(onSubmit)();
+    }
+
+
+
+    const onSubmit = (data: AuthorizationFormInputs): void => {
+        dispatch(createUserOrSignIn({ auth, activeTab, data }));
+    }
+
+    const googleButtonHandler = () => {
+        dispatch(authorizationWithGoogle({ isRedirectResultNeeded: false, auth }));
+    }
+
+    useEffect(() => {
+        getRedirectResult(auth)
+            .then((result) => {
+                result !== null && dispatch(authorizationWithGoogle({ isRedirectResultNeeded: true, auth, currentUser: result.user }));
+            })
+
+    }, [auth, dispatch, navigate])
+
+    useEffect(() => {
+        authorizationErrors.createUserOrSignIn === 'auth/user-not-found'
+            && setError('email', { type: 'custom', message: 'User not found' });
+        authorizationErrors.createUserOrSignIn === 'auth/email-already-in-use'
+            && setError('email', { type: 'custom', message: 'User with this email already exists' });
+        authorizationErrors.createUserOrSignIn === 'auth/wrong-password'
+            && setError('password', { type: 'custom', message: 'Wrong password' });
+
+    }, [authorizationErrors.createUserOrSignIn, setError])
+
+
+
+    useEffect(() => {
+        isLoading && setTimeout(() => {
+            loader === '.' && dispatch(setLoader('..'));
+            loader === '..' && dispatch(setLoader('...'));
+            loader === '...' && dispatch(setLoader('.'));
+        }, 300);
+
+    }, [dispatch, isLoading, loader])
+
+    
+
+    useEffect(() => {
+        if (currentUserLoading !== true && currentUser !== null && currentUser !== undefined && authorizationStatus !== EnumThunkStatus.Pending) {
+            navigate('/', { replace: true });
+        }
+
+    }, [authorizationStatus, currentUser, currentUserLoading, navigate])
+
+
+
+    return (
+        <Wrapper>
+            <Form onSubmit={handleSubmit(onSubmit)}>
+                <Tabs>
+                    <Tab isActive={activeTab === 'logIn' ? true : false} activeTab={activeTab} onClick={tabHandler}>Log In</Tab>
+                    <Tab isActive={activeTab === 'signIn' ? true : false} activeTab={activeTab} onClick={tabHandler}>Sign In</Tab>
+                </Tabs>
+
+
+
+                <Input
+                    autoComplete='off'
+                    type="text"
+                    placeholder='Name'
+                    {...register("name", {
+                        required: "The field is required",
+                        minLength: {
+                            value: 3,
+                            message: "At least three characters",
+                        },
+                        maxLength: {
+                            value: 60,
+                            message: "Not more than sixty characters",
+                        },
+                        disabled: activeTab === 'logIn' ? true : false
+                    })}
+                    isValid={errors?.name ? false : true}
+                    onKeyDown={enterClickHandler}
+                    isHidden={activeTab === 'logIn' ? true : false}
+                />
+                <ErrorMessage>{errors?.name && errors?.name?.message}</ErrorMessage>
+
+
+                <Input
+                    autoComplete='off'
+                    type="text"
+                    placeholder='Surname'
+                    {...register("surname", {
+                        required: "The field is required",
+                        minLength: {
+                            value: 3,
+                            message: "At least three characters",
+                        },
+                        maxLength: {
+                            value: 60,
+                            message: "Not more than sixty characters",
+                        },
+                        disabled: activeTab === 'logIn' ? true : false
+                    })}
+                    isValid={errors?.surname ? false : true}
+                    onKeyDown={enterClickHandler}
+                    isHidden={activeTab === 'logIn' ? true : false}
+                />
+                <ErrorMessage>{errors?.surname && errors?.surname?.message}</ErrorMessage>
+
+
+                <Input
+                    autoComplete='off'
+                    type="text"
+                    placeholder='Email'
+                    {...register("email", {
+                        required: "The field is required",
+                        minLength: {
+                            value: 3,
+                            message: "At least three characters",
+                        },
+                        maxLength: {
+                            value: 100,
+                            message:
+                                "Not more than a hundred characters",
+                        },
+                        pattern: {
+                            value: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+                            message: "Enter the email correctly",
+                        }
+                    })}
+                    isValid={errors?.email ? false : true}
+                    onKeyDown={enterClickHandler}
+                    isHidden={false}
+                />
+                <ErrorMessage>{errors?.email && errors?.email?.message}</ErrorMessage>
+
+
+                <Input
+                    autoComplete='off'
+                    type={inputType}
+                    placeholder='Password'
+                    {...register("password", {
+                        required: "The field is required",
+                        minLength: {
+                            value: 6,
+                            message: "At least six characters",
+                        },
+                        maxLength: {
+                            value: 100,
+                            message:
+                                "Not more than a hundred characters",
+                        },
+                        pattern: {
+                            value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*]{6,}/,
+                            message: "The password must contain at least one number and contain mixed case letters",
+                        }
+                    })}
+                    isValid={errors?.password ? false : true}
+                    onKeyDown={enterClickHandler}
+                    isHidden={false}
+                />
+                <ShowPassword onClick={changeInputType} isHidden={inputType === 'password'}>
+                    <AiOutlineEye />
+                </ShowPassword>
+                <ShowPassword onClick={changeInputType} isHidden={inputType === 'text'}>
+                    <AiOutlineEyeInvisible />
+                </ShowPassword>
+                <ErrorMessage>{errors?.password && errors?.password?.message}</ErrorMessage>
+
+
+                <Input
+                    autoComplete='off'
+                    type={inputType}
+                    placeholder='Сonfirm password'
+                    {...register("passwordConfirm", {
+                        required: "The field is required",
+                        minLength: {
+                            value: 3,
+                            message: "At least three characters",
+                        },
+                        maxLength: {
+                            value: 100,
+                            message:
+                                "Not more than a hundred characters",
+                        },
+                        validate: value => value === currentPassword || "The passwords do not match",
+                        disabled: activeTab === 'logIn' ? true : false
+                    })}
+                    isValid={errors?.passwordConfirm ? false : true}
+                    onKeyDown={enterClickHandler}
+                    isHidden={activeTab === 'logIn' ? true : false}
+                />
+                <ShowPassword onClick={changeInputType} isHidden={activeTab === 'logIn' || inputType === 'password'}>
+                    <AiOutlineEye />
+                </ShowPassword>
+                <ShowPassword onClick={changeInputType} isHidden={activeTab === 'logIn' || inputType === 'text'}>
+                    <AiOutlineEyeInvisible />
+                </ShowPassword>
+                <ErrorMessage>{errors?.passwordConfirm && errors?.passwordConfirm?.message}</ErrorMessage>
+
+
+
+                {!isLoading ?
+                    <Button
+                        onClick={handleSubmit(onSubmit)}
+                        isValid={
+                            activeTab === 'logIn'
+                                ? errors.email !== undefined ||
+                                dirtyFields.email !== true ||
+                                errors.password !== undefined ||
+                                dirtyFields.password !== true
+                                : errors.name !== undefined ||
+                                dirtyFields.name !== true ||
+                                errors.surname !== undefined ||
+                                dirtyFields.surname !== true ||
+                                errors.email !== undefined ||
+                                dirtyFields.email !== true ||
+                                errors.password !== undefined ||
+                                dirtyFields.password !== true ||
+                                errors.passwordConfirm !== undefined ||
+                                dirtyFields.passwordConfirm !== true
+                        }
+                    >
+                        {activeTab === 'logIn' ? 'Login' : 'Register'}
+                    </Button>
+                    :
+                    <Loader>
+                        {loader}
+                    </Loader>
+                }
+
+
+
+                <Line />
+
+
+
+                <СontinueWithGoogle onClick={googleButtonHandler}>
+                    <IconContext.Provider value={{ size: '1.4rem' }}>
+                        <FcGoogle />
+                    </IconContext.Provider>
+                    <СontinueWithGoogleText>
+                        Сontinue with Google
+                    </СontinueWithGoogleText>
+                </СontinueWithGoogle>
+            </Form>
+        </Wrapper>
+    )
+}
 
 
 
@@ -203,285 +487,3 @@ const СontinueWithGoogleText = styled.p`
     font-size: 15px;
     line-height: 14px;
 `;
-
-
-
-
-
-
-
-
-
-
-export default function Authorization() {
-    const navigate = useNavigate();
-    const dispatch = useAppDispatch();
-    const auth = getAuth();
-
-    const { isLoading, loader, activeTab, authorizationErrors } = useAppSelector(state => state.authorization);
-    const {
-        register,
-        formState: { errors, dirtyFields },
-        handleSubmit,
-        watch,
-        setError,
-        clearErrors
-    } = useForm<AuthorizationFormInputs>({
-        mode: "all"
-    });
-
-
-
-    const tabHandler = () => {
-        activeTab === 'logIn' ? dispatch(setActiveTab('signIn')) : dispatch(setActiveTab('logIn'));
-        if (errors.email?.message === 'User not found' || errors.email?.message === 'User with this email already exists' || errors.password?.message === 'Wrong password') {
-            clearErrors();
-        }
-    }
-
-    const currentPassword = watch('password');
-    const [inputType, setInputType] = useState('password');
-
-    const changeInputType = () => {
-        inputType === 'password' ? setInputType('text') : setInputType('password');
-    }
-    const enterClickHandler = (event: React.KeyboardEvent) => {
-        event.code === 'Enter' && handleSubmit(onSubmit)();
-    }
-
-
-
-    const onSubmit = (data: AuthorizationFormInputs): void => {
-        dispatch(createUserOrSignIn({ 
-            auth,
-            navigate,
-            activeTab, 
-            data
-        }));
-    }
-
-    const googleButtonHandler = () => {
-        dispatch(authorizationWithGoogle({ isRedirectResultNeeded: false, auth }));
-    }
-
-    useEffect(() => {
-        getRedirectResult(auth)
-            .then((result) => {
-                result !== null && dispatch(authorizationWithGoogle({ isRedirectResultNeeded: true, auth, currentUser: result.user, navigate }));
-            }) 
-
-    }, [auth, dispatch, navigate])
-
-    useEffect(() => {
-        authorizationErrors.createUserOrSignIn === 'auth/user-not-found'
-            && setError('email', { type: 'custom', message: 'User not found' });
-        authorizationErrors.createUserOrSignIn === 'auth/email-already-in-use'
-            && setError('email', { type: 'custom', message: 'User with this email already exists' });
-        authorizationErrors.createUserOrSignIn === 'auth/wrong-password'
-            && setError('password', { type: 'custom', message: 'Wrong password' });
-
-    }, [authorizationErrors.createUserOrSignIn, setError])
-
-    useEffect(() => {
-        isLoading && setTimeout(() => {
-            loader === '.' && dispatch(setLoader('..'));
-            loader === '..' && dispatch(setLoader('...'));
-            loader === '...' && dispatch(setLoader('.'));
-        }, 300);
-
-    }, [dispatch, isLoading, loader])
-    
-
-
-    return (
-        <Wrapper>
-            <Form onSubmit={handleSubmit(onSubmit)}>
-                <Tabs>
-                    <Tab isActive={activeTab === 'logIn' ? true : false} activeTab={activeTab} onClick={tabHandler}>Log In</Tab>
-                    <Tab isActive={activeTab === 'signIn' ? true : false} activeTab={activeTab} onClick={tabHandler}>Sign In</Tab>
-                </Tabs>
-
-
-
-                <Input
-                    type="text"
-                    placeholder='Name'
-                    {...register("name", {
-                        required: "The field is required",
-                        minLength: {
-                            value: 3,
-                            message: "At least three characters",
-                        },
-                        maxLength: {
-                            value: 60,
-                            message: "Not more than sixty characters",
-                        },
-                        disabled: activeTab === 'logIn' ? true : false
-                    })}
-                    isValid={errors?.name ? false : true}
-                    onKeyDown={enterClickHandler}
-                    isHidden={activeTab === 'logIn' ? true : false}
-                />
-                <ErrorMessage>{errors?.name && errors?.name?.message}</ErrorMessage>
-
-
-                <Input
-                    type="text"
-                    placeholder='Surname'
-                    {...register("surname", {
-                        required: "The field is required",
-                        minLength: {
-                            value: 3,
-                            message: "At least three characters",
-                        },
-                        maxLength: {
-                            value: 60,
-                            message: "Not more than sixty characters",
-                        },
-                        disabled: activeTab === 'logIn' ? true : false
-                    })}
-                    isValid={errors?.surname ? false : true}
-                    onKeyDown={enterClickHandler}
-                    isHidden={activeTab === 'logIn' ? true : false}
-                />
-                <ErrorMessage>{errors?.surname && errors?.surname?.message}</ErrorMessage>
-
-
-                <Input
-                    type="text"
-                    placeholder='Email'
-                    {...register("email", {
-                        required: "The field is required",
-                        minLength: {
-                            value: 3,
-                            message: "At least three characters",
-                        },
-                        maxLength: {
-                            value: 100,
-                            message:
-                                "Not more than a hundred characters",
-                        },
-                        pattern: {
-                            value: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-                            message: "Enter the email correctly",
-                        }
-                    })}
-                    isValid={errors?.email ? false : true}
-                    onKeyDown={enterClickHandler}
-                    isHidden={false}
-                />
-                <ErrorMessage>{errors?.email && errors?.email?.message}</ErrorMessage>
-
-
-                <Input
-                    type={inputType}
-                    placeholder='Password'
-                    {...register("password", {
-                        required: "The field is required",
-                        minLength: {
-                            value: 6,
-                            message: "At least six characters",
-                        },
-                        maxLength: {
-                            value: 100,
-                            message:
-                                "Not more than a hundred characters",
-                        },
-                        pattern: {
-                            value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*]{6,}/,
-                            message: "The password must contain at least one number and contain mixed case letters",
-                        }
-                    })}
-                    isValid={errors?.password ? false : true}
-                    onKeyDown={enterClickHandler}
-                    isHidden={false}
-                />
-                <ShowPassword onClick={changeInputType} isHidden={inputType === 'password'}>
-                    <AiOutlineEye />
-                </ShowPassword>
-                <ShowPassword onClick={changeInputType} isHidden={inputType === 'text'}>
-                    <AiOutlineEyeInvisible />
-                </ShowPassword>
-                <ErrorMessage>{errors?.password && errors?.password?.message}</ErrorMessage>
-
-
-                <Input
-                    type={inputType}
-                    placeholder='Сonfirm password'
-                    {...register("passwordConfirm", {
-                        required: "The field is required",
-                        minLength: {
-                            value: 3,
-                            message: "At least three characters",
-                        },
-                        maxLength: {
-                            value: 100,
-                            message:
-                                "Not more than a hundred characters",
-                        },
-                        validate: value => value === currentPassword || "The passwords do not match",
-                        disabled: activeTab === 'logIn' ? true : false
-                    })}
-                    isValid={errors?.passwordConfirm ? false : true}
-                    onKeyDown={enterClickHandler}
-                    isHidden={activeTab === 'logIn' ? true : false}
-                />
-                <ShowPassword onClick={changeInputType} isHidden={activeTab === 'logIn' || inputType === 'password'}>
-                    <AiOutlineEye />
-                </ShowPassword>
-                <ShowPassword onClick={changeInputType} isHidden={activeTab === 'logIn' || inputType === 'text'}>
-                    <AiOutlineEyeInvisible />
-                </ShowPassword>
-                <ErrorMessage>{errors?.passwordConfirm && errors?.passwordConfirm?.message}</ErrorMessage>
-
-
-
-                {!isLoading ?
-                    <Button
-                        onClick={handleSubmit(onSubmit)}
-                        isValid={
-                            activeTab === 'logIn'
-                                ? errors.email !== undefined ||
-                                dirtyFields.email !== true ||
-                                errors.password !== undefined ||
-                                dirtyFields.password !== true
-                                : errors.name !== undefined ||
-                                dirtyFields.name !== true ||
-                                errors.surname !== undefined ||
-                                dirtyFields.surname !== true ||
-                                errors.email !== undefined ||
-                                dirtyFields.email !== true ||
-                                errors.password !== undefined ||
-                                dirtyFields.password !== true ||
-                                errors.passwordConfirm !== undefined ||
-                                dirtyFields.passwordConfirm !== true
-                        }
-                    >
-                        {activeTab === 'logIn' ? 'Login' : 'Register'}
-                    </Button>
-                    :
-                    <Loader>
-                        {loader}
-                    </Loader>
-                }
-
-
-
-                <Line />
-
-
-
-                <СontinueWithGoogle onClick={googleButtonHandler}>
-                    <IconContext.Provider value={{ size: '1.4rem' }}>
-                        <div>
-                            <FcGoogle />
-                        </div>
-                    </IconContext.Provider>
-                    <СontinueWithGoogleText>
-                        Сontinue with Google
-                    </СontinueWithGoogleText>
-                </СontinueWithGoogle>
-            </Form>
-        </Wrapper>
-    )
-}

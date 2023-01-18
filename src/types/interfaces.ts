@@ -1,4 +1,38 @@
-import { EnumSortParams } from "./enums"
+import { EnumMessageType, EnumSortParams, EnumThunkStatus } from "./enums"
+
+
+
+
+export interface ChatFields {
+	id: number,
+	lastTimeMembersRead: any,
+	messages: MessageFields[],
+	memberData: UserFields
+}
+
+export interface UserFields {
+	displayName: string,
+	photoURL: string,
+	uid: string,
+	email: string,
+	isTyping: boolean
+	isOnline: boolean,
+	wasOnline?: number
+}
+
+export interface MessageFields {
+	chatId: number,
+	content: string,
+	time: number,
+	from: string,
+	type: EnumMessageType,
+	displayName: string,
+	photoURL: string,
+	lastTimeMembersRead: any,
+	minifiedContent?: string,
+	contentWidth?: number,
+	contentHeight?: number
+}
 
 
 
@@ -6,6 +40,7 @@ export interface AuthorizationState {
 	isLoading: boolean,
 	loader: string,
 	activeTab: string,
+	authorizationStatus: EnumThunkStatus | null,
 	authorizationErrors: {
 		presence: string | null,
 		createUserOrSignIn: string | null,
@@ -15,18 +50,21 @@ export interface AuthorizationState {
 
 export interface MainSliceState {
 	sortBy: EnumSortParams,
-	isChatOpen: boolean,
-	isSideBarActive: boolean,
 	isDropdownActive: boolean
 }
 
-export interface SearchPanelState {
+export interface SidebarSliceState {
+	isSidebarActive: boolean,
+}
+
+export interface SearchSliceState {
+	foundChats: ChatFields[],
+	foundMessages: MessageFields[],
 	searchValue: string
 }
 
-export interface ChatState {
-	chatWithId: number | null,
-	focusMessageTimestamp: number | null
+export interface ChatSliceState {
+	sendMessageStatus: EnumThunkStatus | null
 }
 
 
@@ -38,36 +76,8 @@ export interface AuthorizationFormInputs {
 	password: string,
 	passwordConfirm: string
 }
+
 export interface ChatInputFields {
-	image: string,
+	image: any,
 	text: string
-}
-
-
-
-export interface ChatFields {
-	id: number,
-	lastTimeMembersRead: any,
-	messages: MessageFields[],
-	members?: string[],
-	membersData?: MemberFields[]
-}
-export interface MemberFields {
-	displayName: string,
-	photo: string,
-	uid: string,
-	isTyping?: boolean,
-	wasOnline?: number,
-	email?: string
-}
-export interface MessageFields {
-	chatId: number,
-	content: string,
-	time: number,
-	from: string,
-	type: string,
-	email?: string,
-	displayName?: string,
-	photoURL?: string,
-	lastTimeMembersRead?: any
 }
