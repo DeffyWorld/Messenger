@@ -1,16 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-import { MainSliceState } from "../../types/interfaces";
+import { SortBySliceState } from "../../types/interfaces";
 import { EnumSortParams } from "../../types/enums"
 
 
 
-const initialState: MainSliceState = {
+const initialState: SortBySliceState = {
     sortBy: EnumSortParams.Newest,
     isDropdownActive: false
 }
-export const mainSlice = createSlice({
-    name: 'main',
+export const sortBySlice = createSlice({
+    name: 'sortBy',
     initialState,
     reducers: {
         setSortBy(state, action) {
@@ -24,4 +24,4 @@ export const mainSlice = createSlice({
 
 
 
-export const { setSortBy, setIsDropdownActive } = mainSlice.actions;
+export const { setSortBy, setIsDropdownActive } = sortBySlice.actions;

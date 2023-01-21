@@ -1,9 +1,6 @@
 import styled from 'styled-components';
 import { AiOutlinePaperClip } from 'react-icons/ai';
-
 import { ChatInputFields } from '../types/interfaces';
-import { User } from 'firebase/auth';
-
 import { useForm, useWatch } from 'react-hook-form';
 import { sendMessage } from '../redux/slices/chatSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
@@ -15,10 +12,10 @@ import { EnumThunkStatus } from '../types/enums';
 
 interface Props {
     chatId: string,
-    currentUser: User | null | undefined,
-    currentUserLoading: boolean
+    currentUserEmail: string | null,
+    shouldDisableInputs: boolean
 }
-export default function InputField({ chatId, currentUser }: Props) {
+export default function InputField({ chatId, currentUserEmail, shouldDisableInputs }: Props) {
     const dispatch = useAppDispatch();
 
     const { sendMessageStatus } = useAppSelector(state => state.chat);
@@ -41,7 +38,7 @@ export default function InputField({ chatId, currentUser }: Props) {
 
 
     const onSubmit = async (data: ChatInputFields) => {
-        dispatch(sendMessage({ data: data, chatId: chatId, currentUserEmail: currentUser!.email! }))
+        dispatch(sendMessage({ data: data, chatId: chatId, currentUserEmail: currentUserEmail! }))
             .then(() => {
                 setValue('text', '');
                 setValue('image', '');
@@ -56,9 +53,7 @@ export default function InputField({ chatId, currentUser }: Props) {
                 type={'file'}
                 accept={'image/*'}
                 id={'image'}
-                {...register('image', {
-
-                })}
+                {...register('image', {disabled: shouldDisableInputs})}
             />
             <ImageLabel htmlFor={'image'} isEmpty={imageField === undefined || imageField.length === 0} >
                 <AiOutlinePaperClip />
@@ -72,7 +67,8 @@ export default function InputField({ chatId, currentUser }: Props) {
                     maxLength: {
                         value: 200,
                         message: 'Not more than two hundred characters',
-                    }
+                    },
+                    disabled: shouldDisableInputs
                 })}
             />
 

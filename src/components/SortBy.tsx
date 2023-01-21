@@ -5,7 +5,7 @@ import { EnumSortParams } from '../types/enums';
 
 import { IconContext } from 'react-icons';
 import { useAppDispatch } from '../redux/hooks';
-import { setIsDropdownActive, setSortBy } from '../redux/slices/mainSlice';
+import { setIsDropdownActive, setSortBy } from '../redux/slices/sortBySlice';
 
 
 
@@ -63,7 +63,7 @@ export default function SortBy({ isDropdownActive, sortBy }: Props) {
 
 
 const SortByWrapper = styled.div`
-    margin: 12px 0px 4px 12px;
+    margin: 8px 0px 0px 26px;
     gap: 4px;
     display: inline-flex;
     position: relative;

@@ -2,28 +2,35 @@ import styled from 'styled-components';
 import { IoIosArrowBack } from 'react-icons/io';
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
+import { useAppDispatch } from '../redux/hooks';
+import { setIsChatOpen } from '../redux/slices/chatSlice';
+
+import ChatHeaderLoader from './ChatHeaderLoader';
 
 
 
 
 
 interface Props {
-    photoURL: string,
-    displayName: string,
-    isTyping: boolean,
-    isOnline: boolean,
-    wasOnline: number
+    photoURL: string | undefined,
+    displayName: string | undefined,
+    isTyping: boolean | undefined,
+    isOnline: boolean | undefined,
+    wasOnline: number | undefined
 }
 function ChatHeader({ photoURL, displayName, isTyping, isOnline, wasOnline }: Props) {
+    const dispatch = useAppDispatch();
+
     const dateNow = Date.now();
-    const dateWasOnline = new Date(wasOnline);
+    const dateWasOnline = wasOnline !== undefined ? new Date(wasOnline) : undefined;
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    
+
     const navigate = useNavigate();
 
     const onBackButtonClick = () => {
-        navigate('/');
+        dispatch(setIsChatOpen(false));
+        setTimeout(() => navigate('/'), 400);
     }
 
 
@@ -34,32 +41,40 @@ function ChatHeader({ photoURL, displayName, isTyping, isOnline, wasOnline }: Pr
                 <IoIosArrowBack onClick={onBackButtonClick} />
             </Back>
 
-            <Photo photo={photoURL} />
+            {
+                (photoURL === undefined || displayName === undefined || isTyping === undefined || isOnline === undefined || wasOnline === undefined)
+                    ? <ChatHeaderLoader />
+                    : <>
+                        <Photo src={photoURL} referrerPolicy="no-referrer" />
 
-            <TextWrapper>
-                <DisplayName>
-                    {displayName}
-                </DisplayName>
+                        <TextWrapper>
+                            <DisplayName>
+                                {displayName}
+                            </DisplayName>
 
-                {isOnline === true
-                    ? isTyping === true
-                        ? <Status>Typing...</Status>
-                        : <Status>Online</Status>
-                    : dateNow - wasOnline < 3600000
-                        ? dateNow - wasOnline < 60000
-                            ? <WasOnline>last seen just now</WasOnline>
-                            : <WasOnline>last seen {Math.floor((dateNow - wasOnline) / 1000 / 60)} minutes ago</WasOnline>
-                        : dateNow - wasOnline < 86400000
-                            ? <WasOnline>last seen at {dateWasOnline.toLocaleTimeString().split('', 5).join('')}</WasOnline>
-                            : dateNow - wasOnline < 172800000
-                                ? <WasOnline>last seen yesterday</WasOnline>
-                                : dateNow - wasOnline < 604800000
-                                    ? <WasOnline>last seen at {dayNames[dateWasOnline.getDay()]}</WasOnline>
-                                    : dateNow - wasOnline < 31556926000
-                                        ? <WasOnline>last seen at {monthNames[dateWasOnline.getMonth()]}{' '}{dateWasOnline.getDate()}</WasOnline>
-                                        : <WasOnline>last seen at {dateWasOnline.toLocaleDateString()}</WasOnline>
-                }
-            </TextWrapper>
+                            {isOnline === true
+                                ? isTyping === true
+                                    ? <Status>Typing...</Status>
+                                    : <Status>Online</Status>
+                                : dateNow - wasOnline < 3600000
+                                    ? dateNow - wasOnline < 60000
+                                        ? <WasOnline>last seen just now</WasOnline>
+                                        : <WasOnline>last seen {Math.floor((dateNow - wasOnline) / 1000 / 60)} minutes ago</WasOnline>
+                                    : dateNow - wasOnline < 86400000
+                                        ? <WasOnline>last seen at {dateWasOnline!.toLocaleTimeString().split('', 5).join('')}</WasOnline>
+                                        : dateNow - wasOnline < 172800000
+                                            ? <WasOnline>last seen yesterday</WasOnline>
+                                            : dateNow - wasOnline < 604800000
+                                                ? <WasOnline>last seen at {dayNames[dateWasOnline!.getDay()]}</WasOnline>
+                                                : dateNow - wasOnline < 31556926000
+                                                    ? <WasOnline>last seen at {monthNames[dateWasOnline!.getMonth()]}{' '}{dateWasOnline!.getDate()}</WasOnline>
+                                                    : <WasOnline>last seen at {dateWasOnline!.toLocaleDateString()}</WasOnline>
+                            }
+                        </TextWrapper>
+                    </>
+            }
+
+
         </Header>
     )
 }
@@ -86,16 +101,24 @@ const Back = styled.button`
     color: ${({ theme }) => theme.colors.textPrimary};
     cursor: pointer;
 `;
-const Photo = styled.div<{ photo: string }>`
+// const Photo = styled.div<{ photo: string }>`
+    // width: 42px;
+    // height: 42px;
+    // margin-right: 10px;
+
+//     background-image: url(${({ photo }) => photo});
+//     background-repeat: no-repeat;
+//     background-position: center center;
+//     background-size: cover;
+
+//     border-radius: 100px;
+// `;
+
+const Photo = styled.img`
     width: 42px;
     height: 42px;
     margin-right: 10px;
-
-    background-image: url(${({ photo }) => photo});
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-
+    object-fit: cover;
     border-radius: 100px;
 `;
 

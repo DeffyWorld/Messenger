@@ -17,11 +17,10 @@ import ChatListItem from './ChatListItem';
 
 interface Props {
     currentUser: User | null | undefined,
-    currentUserLoading: boolean,
-    chatList: ChatFields[] | undefined
+    chatList: ChatFields[] | undefined,
     membersData: DocumentData[] | undefined
 }
-function SearchPanel({ currentUser, membersData, currentUserLoading, chatList }: Props) {
+function SearchPanel({ currentUser, membersData, chatList }: Props) {
     const dispatch = useAppDispatch();
     const { foundChats, foundMessages, searchValue } = useAppSelector(state => state.searchPanel);
 
@@ -64,16 +63,6 @@ function SearchPanel({ currentUser, membersData, currentUserLoading, chatList }:
 
 
 
-    if (currentUserLoading === false && currentUser === null) {
-        return (
-            <Label>
-                <AiOutlineSearch />
-                <Input placeholder='Search' ref={inputRef} />
-                <AiOutlineClose />
-            </Label>
-        )
-    }
-
     return (
         <SearchWrapper searchValue={searchValue !== ''} >
             <Label>
@@ -93,7 +82,7 @@ function SearchPanel({ currentUser, membersData, currentUserLoading, chatList }:
                                 {...props}
                             />
                         }
-                        renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{width: '4px'}} {...props} />}
+                        renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{ width: '4px' }} {...props} />}
                         renderTrackVertical={props => <TrackVertical {...props} />}
                     >
                         {foundChats.map((chat, index) => (
@@ -159,7 +148,8 @@ const Close = styled(props => <AiOutlineClose {...props} />)`
 
 
 
-const SearchWrapper = styled.div<{ searchValue: boolean }>`
+const SearchWrapper = styled.div<{ searchValue?: boolean }>`
+    margin: 0px 14px 0px 14px;
     background: ${({ theme }) => theme.colors.searchPanelBg};
     border-radius: 12px; 
 

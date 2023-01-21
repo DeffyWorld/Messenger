@@ -48,7 +48,7 @@ export interface AuthorizationState {
 	}
 }
 
-export interface MainSliceState {
+export interface SortBySliceState {
 	sortBy: EnumSortParams,
 	isDropdownActive: boolean
 }
@@ -64,6 +64,7 @@ export interface SearchSliceState {
 }
 
 export interface ChatSliceState {
+	isChatOpen: boolean,
 	sendMessageStatus: EnumThunkStatus | null
 }
 

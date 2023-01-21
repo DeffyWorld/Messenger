@@ -138,12 +138,17 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
 
 
 const initialState: ChatSliceState = {
+    isChatOpen: false,
     sendMessageStatus: null
 }
 export const chatSlice = createSlice({
     name: 'chat',
     initialState,
-    reducers: {},
+    reducers: {
+        setIsChatOpen(state, action) {
+            state.isChatOpen = action.payload;
+        }
+    },
     extraReducers: builder => {
         builder
             .addCase(updateLastTimeMembersRead.rejected, (state, action) => {
@@ -165,4 +170,4 @@ export const chatSlice = createSlice({
 
 
 
-export const { } = chatSlice.actions;
+export const { setIsChatOpen } = chatSlice.actions;

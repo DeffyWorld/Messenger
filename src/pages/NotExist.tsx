@@ -5,13 +5,10 @@ import { useNavigate } from 'react-router-dom';
 
 
 
-interface Props {
-    chat? : boolean
-}
-export default function NotExist({ chat }: Props) {
+export default function NotExist() {
     const navigate = useNavigate();
     
-    const moveToMain = () => {
+    const moveBack = () => {
         navigate(-1);
     }
 
@@ -19,8 +16,8 @@ export default function NotExist({ chat }: Props) {
 
     return (
         <Wrapper>
-            <Title>{chat ? 'This chat does not exist' : 'This page does not exist'}</Title>
-            <Navigate onClick={moveToMain} >Move back</Navigate>
+            <Title>This page does not exist</Title>
+            <Navigate onClick={moveBack} >Move back</Navigate>
         </Wrapper>
     )
 }

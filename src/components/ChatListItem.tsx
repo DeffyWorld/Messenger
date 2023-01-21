@@ -3,6 +3,8 @@ import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 import { MessageFields } from '../types/interfaces'
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
+import { useAppDispatch } from '../redux/hooks';
+import { setIsChatOpen } from '../redux/slices/chatSlice';
 
 
 
@@ -30,10 +32,16 @@ function ChatListItem({
     lastTimeMembersRead,
     focusMessage
 }: Props) {
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+
+    const nowDate = Date.now();
+    const messageDate = message ? new Date(message.time) : null;
 
     const onChatListItemClick = () => {
         const focusMessageTimestamp = message ? message.time : null;
+
+        dispatch(setIsChatOpen(true));
         navigate(focusMessage === undefined ? `/chat/${id}` : `/chat/${id}?focusMessage=${focusMessageTimestamp}`);
     }
 
@@ -43,7 +51,7 @@ function ChatListItem({
     return (
         <Wrapper onClick={onChatListItemClick} >
             <UserImageWrapper>
-                <UserImage photoURL={photoURL} />
+                <UserImage src={photoURL} referrerPolicy="no-referrer" />
                 {isOnline && <IsUserOnlineIndicator />}
             </UserImageWrapper>
 
@@ -55,15 +63,15 @@ function ChatListItem({
                         <DisplayName>{displayName}</DisplayName>
                     </ContentWrapper>
 
-                    {message &&
+                    {messageDate && message &&
                         <Time>
-                            {Date.now() - message.time < 172800000
-                                ? new Date(+message.time).toLocaleTimeString().split('', 5).join('')
-                                : Date.now() - message.time < 604800000
-                                    ? new Date(+message.time).toDateString().split(' ')[0]
-                                    : Date.now() - message.time < 31556926000
-                                        ? new Date(+message.time).toDateString().split(' ', 2)[1]
-                                        : new Date(+message.time).toLocaleDateString()
+                            {nowDate - message.time < 172800000
+                                ? messageDate.toLocaleTimeString().split('', 5).join('')
+                                : nowDate - message.time < 604800000
+                                    ? messageDate.toDateString().split(' ')[0]
+                                    : nowDate - message.time < 31556926000
+                                        ? messageDate.toDateString().split(' ', 2)[1]
+                                        : messageDate.toLocaleDateString()
                             }
                         </Time>
                     }
@@ -121,7 +129,7 @@ export default memo(ChatListItem)
 
 
 const Wrapper = styled.div`
-    padding: 6px 10px 6px 6px;
+    padding: 6px 10px;
     border-radius: 6px;
     transition: all 300ms ease;
     cursor: pointer;
@@ -138,7 +146,7 @@ const LinesWrapper = styled.div`
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 3px 0px;
+    padding: 4px 0px;
 `;
 const LineWrapper = styled.div`
     position: relative;
@@ -180,16 +188,13 @@ const UnreadMessegeIndicator = styled.div`
 
 const UserImageWrapper = styled.div`
     position: relative;
-`;
-const UserImage = styled.div<{ photoURL: string }>`
     width: 46px;
     height: 46px;
-
-    background-image: url(${({ photoURL }) => photoURL});
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-
+`;
+const UserImage = styled.img`
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
     border-radius: 100px;
 `;
 
@@ -212,7 +217,7 @@ const TextFromUser = styled.div`
     font-weight: 400;
     font-size: 15px;
     line-height: 16px;
-    color: ${({ theme }) => theme.colors.textSecondary};
+    color: ${({ theme }) => theme.colors.highlited};
 `;
 const Text = styled.div`
     flex: 1;

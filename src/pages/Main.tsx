@@ -11,7 +11,7 @@ import { ref } from 'firebase/database';
 import { useListVals } from 'react-firebase-hooks/database';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setIsDropdownActive } from '../redux/slices/mainSlice';
+import { setIsDropdownActive } from '../redux/slices/sortBySlice';
 import { presence } from '../redux/slices/authorizationSlice';
 import { Outlet, useMatch, useNavigate } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
@@ -21,6 +21,8 @@ import Sidebar from '../components/Sidebar';
 import Hamburger from '../components/Hamburger';
 import SortBy from '../components/SortBy';
 import SearchPanel from '../components/SearchPanel';
+import ChatListItemLoader from '../components/ChatListItemLoader';
+import { setIsChatOpen } from '../redux/slices/chatSlice';
 
 
 
@@ -32,36 +34,39 @@ export default function Main() {
     const dispatch = useAppDispatch();
 
     const [currentUser, currentUserLoading] = useAuthState(auth);
-    const { sortBy, isDropdownActive } = useAppSelector(state => state.main);
+    const { sortBy, isDropdownActive } = useAppSelector(state => state.sortBy);
+    const { isChatOpen } = useAppSelector(state => state.chat);
     const chatMatch = useMatch('/chat/:id');
 
     const onRootElClick = () => {
         isDropdownActive && dispatch(setIsDropdownActive(false));
     }
 
+    useEffect(() => {chatMatch !== null && dispatch(setIsChatOpen(true))}, [chatMatch, dispatch])
 
 
-    const [chatsData,, chatsDataError] = useCollectionData(
+
+    const [chatsData, , chatsDataError] = useCollectionData(
         currentUser !== null && currentUser !== undefined
             ? query(collection(firestore, 'chats'), where('members', 'array-contains-any', ['user', currentUser.email!]))
             : undefined
     )
-    
+
     const members: string[] | undefined = useMemo(() => chatsData?.map((chat) => {
         return chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email)
     }), [chatsData, currentUser?.email])
 
-    const [membersData,, membersDataError] = useCollectionData(
+    const [membersData, , membersDataError] = useCollectionData(
         members !== undefined && currentUser !== null && currentUser !== undefined
             ? query(collection(firestore, 'users'), where('email', 'in', [...members, currentUser.email]))
             : undefined
     )
 
-    const [membersStatus,, membersStatusError] = useListVals<any>(ref(database, 'usersStatus'));
+    const [membersStatus, , membersStatusError] = useListVals<any>(ref(database, 'usersStatus'));
 
     const sortedChatList: ChatFields[] | undefined = useMemo(() => {
-        if (chatsData && membersData && membersStatus && membersData.length - 1 === chatsData.length) {
-            const chatList = chatsData.map((chat) => {
+        if (chatsData && membersData && membersStatus && membersStatus.length !== 0 && membersData.length - 1 === chatsData.length) {
+            const chatList: ChatFields[] | undefined = chatsData.map((chat) => {
                 const member = chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email);
                 const memberData = membersData.find((memberData) => memberData.email === member);
                 const memberStatusData = membersStatus.find((memberStatus) => memberStatus.email === member);
@@ -79,16 +84,16 @@ export default function Main() {
                     }
                 }
             })
-            return chatList.sort((firstValue, secondValue) => {
+            return chatList && membersStatus && chatList.sort((firstValue, secondValue) => {
                 if (sortBy === EnumSortParams.Alphabet) {
                     const firstValueName = firstValue.memberData!.displayName.split(' ')[0].toLowerCase();
                     const secondValueName = secondValue.memberData!.displayName.split(' ')[0].toLowerCase();
-    
+
                     return firstValueName < secondValueName ? -1 : 1;
                 } else {
                     const firstValueTime = firstValue.messages[firstValue.messages.length - 1].time;
                     const secondValueTime = secondValue.messages[secondValue.messages.length - 1].time;
-    
+
                     return secondValueTime - firstValueTime;
                 }
             })
@@ -114,9 +119,9 @@ export default function Main() {
 
     return (<>
         <Wrapper>
-            <Sidebar isChatOpen={chatMatch !== null} currentUser={currentUser} currentUserLoading={currentUserLoading} />
+            <Sidebar isChatOpen={isChatOpen} currentUser={currentUser} currentUserLoading={currentUserLoading} />
 
-            <MainWrapper onClick={onRootElClick} isChatOpen={chatMatch !== null} >
+            <MainWrapper onClick={onRootElClick} isChatOpen={isChatOpen} >
                 <Header>
                     <Title>Messages</Title>
                     <Hamburger />
@@ -124,7 +129,6 @@ export default function Main() {
 
                 <SearchPanel
                     currentUser={currentUser}
-                    currentUserLoading={currentUserLoading}
                     chatList={sortedChatList}
                     membersData={membersData}
                 />
@@ -135,17 +139,15 @@ export default function Main() {
                     <Scrollbars
                         autoHide
                         autoHideDuration={400}
-                        renderView={({ style, ...props }) =>
-                            <div
-                                style={{ ...style, overflowX: 'auto', marginBottom: '0px' }}
-                                {...props}
-                            />
-                        }
-                        renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{width: '4px'}} {...props} />}
+                        renderView={({ style, ...props }) => <div 
+                            style={{ ...style, overflowX: 'auto', marginBottom: '0px', padding: '0px 6px' }} 
+                            {...props} 
+                        />}
+                        renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{ width: '4px' }} {...props} />}
                         renderTrackVertical={props => <TrackVertical {...props} />}
                     >
-                        {sortedChatList && currentUser && sortedChatList.length !== 0 &&
-                            sortedChatList.map((chat, index) => (
+                        {sortedChatList && currentUser && sortedChatList.length !== 0
+                            ? sortedChatList.map((chat, index) => (
                                 <ChatListItem
                                     key={`${chat}_${index}`}
                                     id={chat.id}
@@ -157,6 +159,9 @@ export default function Main() {
                                     message={chat.messages[chat.messages.length - 1]}
                                     lastTimeMembersRead={chat.lastTimeMembersRead}
                                 />
+                            ))
+                            : Array.from({ length: Math.floor((window.innerHeight - 105) / 58) }).map((elem, index) => (
+                                <ChatListItemLoader key={index} />
                             ))
                         }
                     </Scrollbars>
@@ -180,17 +185,15 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     height: 100vh;
     position: relative;
     overflow: hidden;
-    padding: 14px 14px 0px 14px;
     transition: all 400ms ease-in-out;
     background: ${({ theme }) => theme.colors.bgPrimary};
 
     ${({ isChatOpen }) => isChatOpen && `
         width: 0px;
-        padding: 14px 0px;
     `}
 `;
 const ChatsWrapper = styled.div`
-    height: calc(100vh - 30px - 18px - 50px - 14px);
+    height: calc(100vh - 30px - 14px - 35px - 18px - 8px);
 `;
 const ThumbVertical = styled.div`
     background-color: ${({ theme }) => theme.colors.scrollbarThumb};
@@ -210,6 +213,7 @@ const Header = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 14px 10px 0px 14px;
 `;
 const Title = styled.h1`
     margin-bottom: 19px;

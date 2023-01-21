@@ -8,6 +8,7 @@ import { DocumentData } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import { LazyComponentProps, trackWindowScroll } from 'react-lazy-load-image-component';
+import { useAppSelector } from '../redux/hooks';
 
 import Message from './Message';
 
@@ -30,6 +31,7 @@ function Messages({ chatData, chatWith, scrollPosition }: Props) {
 
 
 
+    const { isChatOpen } = useAppSelector(state => state.chat);
     const [isViewportOnBottom, setIsViewportOnBottom] = useState<boolean>(focusMessageTimestamp ? false : true);
 
     useEffect(() => {
@@ -44,65 +46,63 @@ function Messages({ chatData, chatWith, scrollPosition }: Props) {
             rootMargin: '0px',
             threshold: 1
         });
-        setTimeout(() => {lastMessageRefCurrent && observer.observe(lastMessageRefCurrent)}, 400);
+        setTimeout(() => { lastMessageRefCurrent && observer.observe(lastMessageRefCurrent) }, 400);
 
-        return () => {lastMessageRefCurrent && observer.unobserve(lastMessageRefCurrent)}
+        return () => { lastMessageRefCurrent && observer.unobserve(lastMessageRefCurrent) }
 
-    }, [chatData.messages.length])
+    }, [chatData?.messages.length])
 
 
 
     const scrollToBottom = () => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth'});
+        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
 
     useEffect(() => {
-        focusMessageRef.current && scrollbar.current && 
+        focusMessageRef.current && scrollbar.current &&
             scrollbar.current.scrollTop(focusMessageRef.current.offsetTop - scrollbar.current.getClientHeight() / 2);
         setSearchParams(undefined);
 
     }, [setSearchParams])
 
-    useEffect(() => {isViewportOnBottom && scrollbar.current && scrollbar.current.scrollToBottom()}, [chatData.messages, isViewportOnBottom])
+    useEffect(() => { isViewportOnBottom && scrollbar.current && scrollbar.current.scrollToBottom() }, [chatData?.messages, isViewportOnBottom])
 
 
 
-    return (
-        <Wrapper>
-            <Scrollbars
-                ref={scrollbar}
-                renderView={(style, props) => <MessagesWrapper  {...props} />}
-                renderThumbVertical={(props) => <ThumbVertical {...props} />}
-                renderTrackVertical={(props) => <TrackVertical {...props} />}
-            >
-                {chatData.messages.map((message: MessageFields, index: number, messages: MessageFields[]) => (
-                    <Message
-                        key={`${message.time}_${index}`}
-                        time={message.time}
-                        from={message.from}
-                        type={message.type}
-                        content={message.content}
-                        minifiedContent={message.minifiedContent}
-                        contentWidth={message.contentWidth}
-                        contentHeight={message.contentHeight}
-                        isFirstMessage={index === 0}
-                        prevMessageTime={index !== 0 ? messages[index - 1].time : undefined}
-                        prevMessageFrom={index !== 0 ? messages[index - 1].from : undefined}
-                        chatWith={chatWith}
-                        readed={message.from === chatWith || message.from === 'user' ? message.time < chatData.lastTimeMembersRead[chatWith.split('.')[0]] : undefined}
-                        scrollPosition={message.type === EnumMessageType.Image ? scrollPosition : undefined}
-                        ref={message.time === focusMessageTimestamp ? focusMessageRef : messages.length - 1 === index ? lastMessageRef : undefined}
-                    />
-                ))}
-            </Scrollbars>
+    return (<>
+        <Scrollbars
+            ref={scrollbar}
+            renderView={(props) => <MessagesWrapper {...props} />}
+            renderThumbVertical={(props) => <ThumbVertical {...props} />}
+            renderTrackVertical={(props) => <TrackVertical {...props} />}
+        >
+            {chatData?.messages.map((message: MessageFields, index: number, messages: MessageFields[]) => (
+                <Message
+                    key={`${message.time}_${index}`}
+                    time={message.time}
+                    from={message.from}
+                    type={message.type}
+                    content={message.content}
+                    minifiedContent={message.minifiedContent}
+                    contentWidth={message.contentWidth}
+                    contentHeight={message.contentHeight}
+                    isFirstMessage={index === 0}
+                    prevMessageTime={index !== 0 ? messages[index - 1].time : undefined}
+                    prevMessageFrom={index !== 0 ? messages[index - 1].from : undefined}
+                    chatWith={chatWith}
+                    readed={message.from === chatWith || message.from === 'user' ? message.time < chatData.lastTimeMembersRead[chatWith.split('.')[0]] : undefined}
+                    scrollPosition={message.type === EnumMessageType.Image ? scrollPosition : undefined}
+                    ref={message.time === focusMessageTimestamp ? focusMessageRef : messages.length - 1 === index ? lastMessageRef : undefined}
+                />
+            ))}
+        </Scrollbars>
 
-            <CSSTransition nodeRef={nodeRef} classNames="transition" in={!isViewportOnBottom} timeout={280} mountOnEnter unmountOnExit >
-                <ScrollToBottomButton ref={nodeRef} onClick={scrollToBottom} >
-                    <FiChevronDown />
-                </ScrollToBottomButton>
-            </CSSTransition>
-        </Wrapper>
-    )
+        <CSSTransition nodeRef={nodeRef} classNames="transition" in={!isViewportOnBottom && isChatOpen} timeout={280} mountOnEnter unmountOnExit >
+            <ScrollToBottomButton ref={nodeRef} onClick={scrollToBottom} >
+                <FiChevronDown />
+            </ScrollToBottomButton>
+        </CSSTransition>
+    </>)
 }
 
 export default trackWindowScroll(Messages);
@@ -111,8 +111,12 @@ export default trackWindowScroll(Messages);
 
 
 
-const Wrapper = styled.div`
-    height: calc(100vh - 55px - 62px);
+const MessagesWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    color: ${({ theme }) => theme.colors.bgPrimary};
+    background-color: ${({ theme }) => theme.colors.bgPrimary};
 
     .transition-enter {
         opacity: 0;
@@ -132,17 +136,6 @@ const Wrapper = styled.div`
         bottom: 50px;
         transition: 400ms;
     }
-`;
-const MessagesWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    inset: 0px;
-    overflow: scroll;
-    overflow-x: auto;
-    margin-right: -17px;
-    color: ${({ theme }) => theme.colors.bgPrimary};
-    background-color: ${({ theme }) => theme.colors.bgPrimary};
 `;
 const ThumbVertical = styled.div`
     background-color: ${({ theme }) => theme.colors.scrollbarThumb};

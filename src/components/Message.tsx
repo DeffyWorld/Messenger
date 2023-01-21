@@ -74,7 +74,7 @@ function Message(props: Props, ref: ForwardedRef<HTMLDivElement>) {
                     threshold={30}
                     scrollPosition={props.scrollPosition}
                     wrapperClassName={'blur-wrapper'}
-                    style={{ width: 'inherit', height: 'inherit', maxWidth: '75vw', maxHeight: '240px', borderRadius: 'inherit' }}
+                    style={{ width: 'inherit', height: 'inherit', maxWidth: '75vw', maxHeight: '240px', borderRadius: 'inherit', objectFit:'cover' }}
                 />
             }
 
@@ -108,7 +108,7 @@ const MessageWrapper = styled.div<{ round: boolean, fromCurrentUser: boolean, is
     background-color: ${({ theme }) => theme.colors.messageBg};
     border-radius: 0px 16px 16px 16px;
 
-    ${({ fromCurrentUser, isPhoto, theme }) => fromCurrentUser && `
+    ${({ fromCurrentUser, theme }) => fromCurrentUser && `
         align-self: flex-end;
         border-radius: 16px 0px 16px 16px;
         background-color: ${theme.colors.messageFromCurrentUserBg};
@@ -117,9 +117,7 @@ const MessageWrapper = styled.div<{ round: boolean, fromCurrentUser: boolean, is
         border-radius: 16px;
         margin-top: -2px;
     `}
-    ${({ isPhoto, fromCurrentUser, theme }) => isPhoto && `
-        max-width: 75vw;
-        max-height: 240px;
+    ${({ isPhoto }) => isPhoto && `
         padding: 0px;
         margin: 6px 12px;
         position: relative;
@@ -132,7 +130,9 @@ const MessageWrapper = styled.div<{ round: boolean, fromCurrentUser: boolean, is
 
     .blur-wrapper {
         width: inherit;
+        max-width: 75vw;
         height: inherit;
+        max-height: 240px;
         display: flex;
         border-radius: inherit;
     }
