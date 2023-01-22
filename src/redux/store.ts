@@ -22,17 +22,17 @@ import { sidebarSlice } from "./slices/sidebarSlice";
 const rootPersistConfig = {
     key: 'root',
     storage: localForage,
-    blacklist: ['searchPanel']
+    blacklist: ['searchPanel', 'authorization', 'chat']
 };
 const authorizationSlicePersistConfig = {
     key: 'authorization',
     storage: localForage,
-    blacklist: ['authorizationErrors', 'loader']
+    whitelist: ['activeTab', 'isLoading']
 };
 const chatPersistConfig = {
     key: 'chat',
     storage: localForage,
-    blacklist: ['sendMessageStatus']
+    whitelist: ['isChatOpen']
 };
 
 const rootReducer = combineReducers({

@@ -131,6 +131,9 @@ export const authorizationSlice = createSlice({
     name: 'authorization',
     initialState,
     reducers: {
+        setIsLaoding(state, action) {
+            state.isLoading = action.payload;
+        },
         setLoader(state, action) {
             state.loader = action.payload;
         },
@@ -142,7 +145,7 @@ export const authorizationSlice = createSlice({
         builder
             .addCase(presence.rejected, (state, action) => {
                 state.authorizationErrors.presence = action.payload!;
-                console.error(action.payload)
+                console.error(action.payload);
             })
 
             .addCase(createUserOrSignIn.pending, (state) => {
@@ -157,7 +160,7 @@ export const authorizationSlice = createSlice({
                 state.authorizationStatus = EnumThunkStatus.Rejected;
                 state.isLoading = false;
                 state.authorizationErrors.createUserOrSignIn = action.payload!;
-                console.error(action.payload)
+                console.error(action.payload);
             })
 
             .addCase(authorizationWithGoogle.pending, (state) => {
@@ -172,11 +175,11 @@ export const authorizationSlice = createSlice({
                 state.authorizationStatus = EnumThunkStatus.Rejected;
                 state.isLoading = false;
                 state.authorizationErrors.authorizationWithGoogle = action.payload!;
-                console.error(action.payload)
+                console.error(action.payload);
             })
     }
 })
 
 
 
-export const { setLoader, setActiveTab } = authorizationSlice.actions;
+export const { setIsLaoding, setLoader, setActiveTab } = authorizationSlice.actions;

@@ -130,11 +130,19 @@ const SidebarWrapper = styled.div<{ isSidebarActive: boolean, isChatOpen: boolea
     background-color: ${({ theme }) => theme.colors.bgSecondary};
     transition: 300ms all ease-in-out;
 
-    ${({ isSidebarActive, isChatOpen }) => (!isSidebarActive || isChatOpen) && `
+    ${({ isSidebarActive }) => !isSidebarActive && `
         width: 0px;
         padding: 6px 0px;
         z-index: -1;
-    `}
+    `}  
+
+    /* @media (${({ theme }) => theme.media.md}) {
+        ${({ isChatOpen }) => isChatOpen && `
+            width: 0px;
+            padding: 6px 0px;
+            z-index: -1;
+        `}   
+    } */
 `;
 const Settings = styled.div`
     position: fixed;

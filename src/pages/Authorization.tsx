@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth, getRedirectResult } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { authorizationWithGoogle, createUserOrSignIn, setActiveTab, setLoader } from '../redux/slices/authorizationSlice';
+import { authorizationWithGoogle, createUserOrSignIn, setActiveTab, setIsLaoding, setLoader } from '../redux/slices/authorizationSlice';
 import { EnumThunkStatus } from '../types/enums';
 
 
@@ -67,9 +67,12 @@ export default function Authorization() {
     }
 
     useEffect(() => {
+        console.log('first')
         getRedirectResult(auth)
             .then((result) => {
-                result !== null && dispatch(authorizationWithGoogle({ isRedirectResultNeeded: true, auth, currentUser: result.user }));
+                result !== null 
+                    ? dispatch(authorizationWithGoogle({ isRedirectResultNeeded: true, auth, currentUser: result.user }))
+                    : dispatch(setIsLaoding(false));
             })
 
     }, [auth, dispatch, navigate])
@@ -313,6 +316,7 @@ const Wrapper = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
 `
 const Form = styled.form`
     padding: 90px;
@@ -335,6 +339,10 @@ const Tabs = styled.div`
     display: flex;
     justify-content: space-evenly;
     margin-bottom: 40px;
+    
+    @media ((max-height: 500px)) {
+        margin-top: 60px;
+    }
 `
 const Tab = styled.h2<{ isActive: boolean, activeTab: any }>`
     font-family: SFPro;

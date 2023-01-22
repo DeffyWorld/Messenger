@@ -1,5 +1,5 @@
 import styled, { keyframes } from 'styled-components';
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom';
 import { database, firestore } from '../firebase';
 import { doc } from 'firebase/firestore';
@@ -26,20 +26,19 @@ export default function Chat() {
 
     const { chatId } = useParams();
     const [currentUser] = useAuthState(auth);
-    const chatWith = useRef<string | null>(null);
-
-
+    const [chatWith, setChatWith] = useState<string | null>(null)
     const [hasUserPermissions, setHasUserPermissions] = useState<boolean | null>(null);
 
     const [chatData, chatDataLoading, chatDataError] = useDocumentData(doc(firestore, 'chats', chatId!));
 
-    chatWith.current = chatWith.current === null && chatData
-        ? chatData.members.find((member: string) => member !== currentUser?.email && member !== 'user')
-        : chatWith.current;
+    useEffect(() => {
+        chatData && setChatWith(chatData.members.find((member: string) => member !== currentUser?.email && member !== 'user'));
+        
+    }, [chatData, currentUser?.email])
 
     useEffect(() => {
         if (!chatDataLoading && chatData !== undefined) {
-            if (chatWith.current === 'tailorswift@gmail.com' || chatWith.current === 'barakobama@gmail.com') {
+            if (chatWith === 'tailorswift@gmail.com' || chatWith === 'barakobama@gmail.com') {
                 setHasUserPermissions(true);
             } else {
                 const index = chatData!.members.indexOf(currentUser!.email);
@@ -48,10 +47,10 @@ export default function Chat() {
 
         }
 
-    }, [chatDataLoading])
+    }, [chatData, chatDataLoading, chatWith, currentUser])
 
 
-    const [chatWithData, , chatWithDataError] = useDocumentData(chatWith.current ? doc(firestore, 'users', chatWith.current) : undefined);
+    const [chatWithData, , chatWithDataError] = useDocumentData(chatWith ? doc(firestore, 'users', chatWith) : undefined);
     const [chatWithStatusData, , chatWithStatusDataError] = useObjectVal<any>(chatWithData ? ref(database, `usersStatus/${chatWithData.uid}`) : undefined);
 
 
@@ -59,8 +58,8 @@ export default function Chat() {
     const lastMessageTimestamp: number | null = chatData !== undefined ? chatData.messages[chatData.messages.length - 1].time : null;
 
     useEffect(() => {
-        if (lastMessageTimestamp && currentUser && chatWith.current) {
-            dispatch(setLastTimeMembersRead({ chatWith: chatWith.current, chatId: chatId!, currentUserEmail: currentUser.email! }));
+        if (lastMessageTimestamp && currentUser && chatWith) {
+            dispatch(setLastTimeMembersRead({ chatWith: chatWith, chatId: chatId!, currentUserEmail: currentUser.email! }));
         }
 
     }, [chatId, chatWith, currentUser, dispatch, lastMessageTimestamp])
@@ -79,7 +78,7 @@ export default function Chat() {
 
 
             <StatusWrapper>
-                {chatData && hasUserPermissions && <Messages chatData={chatData} chatWith={chatWith.current!} />}
+                {chatData && hasUserPermissions && chatWith && <Messages chatData={chatData} chatWith={chatWith!} />}
 
                 {chatDataLoading === true && chatData === undefined &&
                     <Loader>
@@ -114,17 +113,24 @@ export default function Chat() {
 
 const Wrapper = styled.div`
     height: 100vh;
-    width: 100vw;
-    margin-right: -100vw;
+    width: calc(100vw - 360px);
     background: ${({ theme }) => theme.colors.bgPrimary};
+
+    @media (${({ theme }) => theme.media.md}) {
+        width: 100vw;
+    }
 `;
 
 const StatusWrapper = styled.div`
     height: calc(100vh - 55px - 62px);
-    width: 100vw;
+    width: calc(100vw - 360px);
     display: flex;
     align-items: center;
     justify-content: center;
+
+    @media (${({ theme }) => theme.media.md}) {
+        width: 100vw;
+    }
 `;
 
 const ldsRing = keyframes`

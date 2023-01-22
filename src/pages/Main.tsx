@@ -42,7 +42,7 @@ export default function Main() {
         isDropdownActive && dispatch(setIsDropdownActive(false));
     }
 
-    useEffect(() => {chatMatch !== null && dispatch(setIsChatOpen(true))}, [chatMatch, dispatch])
+    useEffect(() => { chatMatch !== null && dispatch(setIsChatOpen(true)) }, [chatMatch, dispatch])
 
 
 
@@ -80,11 +80,11 @@ export default function Main() {
                         photoURL: memberData?.photoURL,
                         uid: memberData?.uid,
                         isTyping: memberData?.isTyping,
-                        isOnline: memberStatusData.isOnline,
+                        isOnline: memberStatusData?.isOnline,
                     }
                 }
             })
-            return chatList && membersStatus && chatList.sort((firstValue, secondValue) => {
+            return chatList && chatList.sort((firstValue, secondValue) => {
                 if (sortBy === EnumSortParams.Alphabet) {
                     const firstValueName = firstValue.memberData!.displayName.split(' ')[0].toLowerCase();
                     const secondValueName = secondValue.memberData!.displayName.split(' ')[0].toLowerCase();
@@ -139,9 +139,9 @@ export default function Main() {
                     <Scrollbars
                         autoHide
                         autoHideDuration={400}
-                        renderView={({ style, ...props }) => <div 
-                            style={{ ...style, overflowX: 'auto', marginBottom: '0px', padding: '0px 6px' }} 
-                            {...props} 
+                        renderView={({ style, ...props }) => <div
+                            style={{ ...style, overflowX: 'auto', marginBottom: '0px', padding: '0px 6px' }}
+                            {...props}
                         />}
                         renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{ width: '4px' }} {...props} />}
                         renderTrackVertical={props => <TrackVertical {...props} />}
@@ -179,18 +179,25 @@ export default function Main() {
 
 const Wrapper = styled.div`
     display: flex;
+    background-color: ${({ theme }) => theme.colors.bgPrimary};
 `;
 const MainWrapper = styled.section<{ isChatOpen: boolean }>`
-    width: 100vw;
+    width: 360px;
     height: 100vh;
+    border-right: 2px solid ${({ theme }) => theme.colors.bgSecondary};
     position: relative;
     overflow: hidden;
     transition: all 400ms ease-in-out;
-    background: ${({ theme }) => theme.colors.bgPrimary};
+    background-color: ${({ theme }) => theme.colors.bgPrimary};
 
-    ${({ isChatOpen }) => isChatOpen && `
-        width: 0px;
-    `}
+    @media (${({ theme }) => theme.media.md}) {
+        width: 100vw;
+        border-right: none;
+
+        ${({ isChatOpen }) => isChatOpen && `
+            width: 0px;
+        `}
+    }
 `;
 const ChatsWrapper = styled.div`
     height: calc(100vh - 30px - 14px - 35px - 18px - 8px);

@@ -30,7 +30,9 @@ function ChatHeader({ photoURL, displayName, isTyping, isOnline, wasOnline }: Pr
 
     const onBackButtonClick = () => {
         dispatch(setIsChatOpen(false));
-        setTimeout(() => navigate('/'), 400);
+        window.innerWidth > 992 
+            ? navigate('/')
+            : setTimeout(() => navigate('/'), 400);
     }
 
 
@@ -101,18 +103,6 @@ const Back = styled.button`
     color: ${({ theme }) => theme.colors.textPrimary};
     cursor: pointer;
 `;
-// const Photo = styled.div<{ photo: string }>`
-    // width: 42px;
-    // height: 42px;
-    // margin-right: 10px;
-
-//     background-image: url(${({ photo }) => photo});
-//     background-repeat: no-repeat;
-//     background-position: center center;
-//     background-size: cover;
-
-//     border-radius: 100px;
-// `;
 
 const Photo = styled.img`
     width: 42px;
