@@ -1,16 +1,17 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { ChatInputFields, ChatSliceState } from "../../types/interfaces";
+import { ChatInputFields, ChatSliceState, ImageResolution } from "../../types/interfaces";
 import { EnumMessageType, EnumThunkStatus } from "../../types/enums";
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { firestore, storage } from "../../firebase";
 import Resizer from "react-image-file-resizer";
+import axios from "axios";
 
 
 
-export const updateLastTimeMembersRead = createAsyncThunk<any, { chatWith: string, chatId: string, currentUserEmail: string }, { rejectValue: string }>(
-    'chat/updateLastTimeMembersRead', async ({ chatWith, chatId, currentUserEmail }, { rejectWithValue }) => {
+export const setLastTimeMembersRead = createAsyncThunk<any, { chatWith: string, chatId: string, currentUserEmail: string }, { rejectValue: string }>(
+    'chat/setLastTimeMembersRead', async ({ chatWith, chatId, currentUserEmail }, { rejectWithValue }) => {
         try {
             if (chatWith === 'tailorswift@gmail.com' || chatWith === 'barakobama@gmail.com') {
                 updateDoc(doc(firestore, 'chats', `${chatId}`), {
@@ -27,16 +28,25 @@ export const updateLastTimeMembersRead = createAsyncThunk<any, { chatWith: strin
     }
 )
 
+export const setIsTyping = createAsyncThunk<any, { user: string, value: boolean}, { rejectValue: string }>(
+    'chat/setIsTyping', ({ user, value }, { rejectWithValue }) => {
+        updateDoc(doc(firestore, 'users', `${user}`), {
+            isTyping: value
+        }).then(() => {
+            return
+        }).catch((error) => {
+            rejectWithValue(error.code);
+        })
+    }
+)
+
 export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId: string, currentUserEmail: string }, { rejectValue: string }>(
     'chat/sendMessage', async ({ data, chatId, currentUserEmail }, { rejectWithValue }) => {
         const sendMessage = async (
             type: EnumMessageType,
             content: string,
             minifiedContent?: string,
-            imageResolution?: {
-                imageWidth: number;
-                imageHeight: number;
-            }
+            imageResolution?: ImageResolution
         ) => {
             if (type !== EnumMessageType.Image) {
                 await updateDoc(doc(firestore, 'chats', `${chatId}`), {
@@ -81,7 +91,7 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
         }
 
         const getImageResolution = async (image: any) => {
-            const imageResolution = await new Promise((resolve) => {
+            const imageResolution: ImageResolution = await new Promise((resolve) => {
                 const img = new Image();
                 img.src = URL.createObjectURL(image);
                 img.onload = () => {
@@ -114,7 +124,7 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
             if (data.image !== undefined && data.image.length !== 0) {
                 const image: any = data.image[0];
                 const resizedImage: any = await resizeImage(image);
-                const imageResolution: any = await getImageResolution(resizedImage);
+                const imageResolution: ImageResolution = await getImageResolution(resizedImage);
 
                 const dateNow = Date.now();
                 const imageStorageRef = ref(storage, `images/${dateNow}${image.name}`);
@@ -135,6 +145,34 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
     }
 )
 
+export const getJoke = createAsyncThunk<any, { chatId: string }, { rejectValue: string }>(
+    'chat/getJoke', async ({ chatId }, { rejectWithValue }) => {
+        try {
+            const joke = (await axios.get('https://api.chucknorris.io/jokes/random')).data.value;
+
+            await new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    updateDoc(doc(firestore, 'chats', `${chatId}`), {
+                        messages: arrayUnion({
+                            chatId: chatId,
+                            content: joke,
+                            from: chatId === '0' ? 'tailorswift@gmail.com' : 'barakobama@gmail.com',
+                            time: Date.now(),
+                            type: EnumMessageType.Text
+                        })
+                    }).then(() => {
+                        resolve(undefined);
+                    })
+                }, 2000);
+            })
+
+            return
+        } catch (error: any) {
+            rejectWithValue(error.message);
+        }
+    }
+)
+
 
 
 const initialState: ChatSliceState = {
@@ -151,7 +189,11 @@ export const chatSlice = createSlice({
     },
     extraReducers: builder => {
         builder
-            .addCase(updateLastTimeMembersRead.rejected, (state, action) => {
+            .addCase(setLastTimeMembersRead.rejected, (state, action) => {
+                console.error(action.payload);
+            })
+
+            .addCase(setIsTyping.rejected, (state, action) => {
                 console.error(action.payload);
             })
 
@@ -163,6 +205,10 @@ export const chatSlice = createSlice({
             })
             .addCase(sendMessage.rejected, (state, action) => {
                 state.sendMessageStatus = EnumThunkStatus.Rejected;
+                console.error(action.payload);
+            })
+
+            .addCase(getJoke.rejected, (state, action) => {
                 console.error(action.payload);
             })
     }

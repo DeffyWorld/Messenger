@@ -1,10 +1,11 @@
 import styled from 'styled-components';
 import { AiOutlinePaperClip } from 'react-icons/ai';
+import { EnumThunkStatus } from '../types/enums';
 import { ChatInputFields } from '../types/interfaces';
 import { useForm, useWatch } from 'react-hook-form';
-import { sendMessage } from '../redux/slices/chatSlice';
+import { getJoke, sendMessage, setIsTyping } from '../redux/slices/chatSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { EnumThunkStatus } from '../types/enums';
+import { useEffect, useRef } from 'react';
 
 
 
@@ -30,55 +31,72 @@ export default function InputField({ chatId, currentUserEmail, shouldDisableInpu
         mode: "onSubmit"
     });
 
-    const imageField = useWatch({ name: 'image', control: control })
+    const imageField = useWatch({ name: 'image', control: control });
     const textField = useWatch({ name: 'text', control: control, defaultValue: '' });
 
     const isValid = sendMessageStatus !== EnumThunkStatus.Pending && ((imageField !== undefined && imageField.length !== 0) || (textField !== undefined && textField !== ''));
 
 
 
+    const prevTextField = useRef<string | null>(null);
+
+    useEffect(() => { prevTextField.current = textField; }, [textField]);
+
+    useEffect(() => {
+        textField !== '' && prevTextField.current === '' && dispatch(setIsTyping({ user: currentUserEmail!, value: true }));
+        textField === '' && prevTextField.current !== '' && dispatch(setIsTyping({ user: currentUserEmail!, value: false }));
+
+    }, [currentUserEmail, dispatch, textField])
+
+
+
     const onSubmit = async (data: ChatInputFields) => {
-        dispatch(sendMessage({ data: data, chatId: chatId, currentUserEmail: currentUserEmail! }))
-            .then(() => {
-                setValue('text', '');
-                setValue('image', '');
-            })
-    }
+        await dispatch(sendMessage({ data: data, chatId: chatId, currentUserEmail: currentUserEmail! }))
+
+        setValue('text', '');
+        setValue('image', '');
+
+        if (chatId === '0' || chatId === '1') {
+            const chatWith = chatId === '0' ? 'tailorswift@gmail.com' : 'barakobama@gmail.com';
+
+            dispatch(setIsTyping({ user: chatWith, value: true }));
+            await dispatch(getJoke({ chatId: chatId }));
+            await dispatch(setIsTyping({ user: chatWith, value: false }));
+        }
+}
 
 
 
-    return (
-        <Form onSubmit={handleSubmit(onSubmit)} >
-            <ImageInput
-                type={'file'}
-                accept={'image/*'}
-                id={'image'}
-                {...register('image', {disabled: shouldDisableInputs})}
-            />
-            <ImageLabel htmlFor={'image'} isEmpty={imageField === undefined || imageField.length === 0} >
-                <AiOutlinePaperClip />
-            </ImageLabel>
+return (
+    <Form onSubmit={handleSubmit(onSubmit)} >
+        <ImageInput
+            type={'file'}
+            accept={'image/*'}
+            id={'image'}
+            {...register('image', { disabled: shouldDisableInputs })}
+        />
+        <ImageLabel htmlFor={'image'} isEmpty={imageField === undefined || imageField.length === 0} >
+            <AiOutlinePaperClip />
+        </ImageLabel>
 
-            <TextInput
-                autoComplete='off'
-                type={'text'}
-                placeholder={'Type your message here...'}
-                {...register('text', {
-                    maxLength: {
-                        value: 200,
-                        message: 'Not more than two hundred characters',
-                    },
-                    disabled: shouldDisableInputs
-                })}
-            />
+        <TextInput
+            autoComplete='off'
+            type={'text'}
+            placeholder={'Type your message here...'}
+            {...register('text', {
+                maxLength: {
+                    value: 200,
+                    message: 'Not more than two hundred characters',
+                },
+                disabled: shouldDisableInputs
+            })}
+        />
 
-            <Send onClick={handleSubmit(onSubmit)} disabled={!isValid} isValid={isValid} >Send</Send>
+        <Send onClick={handleSubmit(onSubmit)} disabled={!isValid} isValid={isValid} >Send</Send>
 
-            {errors && (
-                <Errors></Errors>
-            )}
-        </Form>
-    )
+        {errors && (<Errors></Errors>)}
+    </Form>
+)
 }
 
 

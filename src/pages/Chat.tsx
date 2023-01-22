@@ -9,7 +9,7 @@ import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref } from 'firebase/database';
 import { useAppDispatch } from '../redux/hooks';
-import { updateLastTimeMembersRead } from '../redux/slices/chatSlice';
+import { setLastTimeMembersRead } from '../redux/slices/chatSlice';
 
 import ChatHeader from '../components/ChatHeader';
 import Messages from '../components/Messages';
@@ -48,7 +48,7 @@ export default function Chat() {
 
         }
 
-    }, [chatData, chatDataLoading, currentUser])
+    }, [chatDataLoading])
 
 
     const [chatWithData, , chatWithDataError] = useDocumentData(chatWith.current ? doc(firestore, 'users', chatWith.current) : undefined);
@@ -59,8 +59,8 @@ export default function Chat() {
     const lastMessageTimestamp: number | null = chatData !== undefined ? chatData.messages[chatData.messages.length - 1].time : null;
 
     useEffect(() => {
-        if (lastMessageTimestamp && currentUser) {
-            dispatch(updateLastTimeMembersRead({ chatWith: chatWith.current!, chatId: chatId!, currentUserEmail: currentUser.email! }));
+        if (lastMessageTimestamp && currentUser && chatWith.current) {
+            dispatch(setLastTimeMembersRead({ chatWith: chatWith.current, chatId: chatId!, currentUserEmail: currentUser.email! }));
         }
 
     }, [chatId, chatWith, currentUser, dispatch, lastMessageTimestamp])

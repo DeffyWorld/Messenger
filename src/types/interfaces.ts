@@ -82,3 +82,10 @@ export interface ChatInputFields {
 	image: any,
 	text: string
 }
+
+
+
+export interface ImageResolution {
+	imageWidth: number;
+	imageHeight: number;
+}
