@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth, getRedirectResult } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { authorizationWithGoogle, createUserOrSignIn, setActiveTab, setIsLaoding, setLoader } from '../redux/slices/authorizationSlice';
+import { authorizationWithGoogle, createUserOrSignIn, setActiveTab, setIsLoading, setLoader } from '../redux/slices/authorizationSlice';
 import { EnumThunkStatus } from '../types/enums';
 
 
@@ -67,15 +67,14 @@ export default function Authorization() {
     }
 
     useEffect(() => {
-        console.log('first')
         getRedirectResult(auth)
             .then((result) => {
                 result !== null 
                     ? dispatch(authorizationWithGoogle({ isRedirectResultNeeded: true, auth, currentUser: result.user }))
-                    : dispatch(setIsLaoding(false));
+                    : dispatch(setIsLoading(false));
             })
 
-    }, [auth, dispatch, navigate])
+    }, [auth, dispatch])
 
     useEffect(() => {
         authorizationErrors.createUserOrSignIn === 'auth/user-not-found'

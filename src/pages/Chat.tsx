@@ -118,6 +118,7 @@ const Wrapper = styled.div`
 
     @media (${({ theme }) => theme.media.md}) {
         width: 100vw;
+        margin-right: -100vw;
     }
 `;
 

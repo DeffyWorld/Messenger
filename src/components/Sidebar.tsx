@@ -100,7 +100,7 @@ function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
 
 
         <StartMessagingBg isStartMessagingOpen={isStartMessagingOpen} >
-            <StartMessaging>
+            <StartMessaging isStartMessagingOpen={isStartMessagingOpen} >
                 <Input placeholder='Start messaging with...' onChange={inputHandler} />
 
                 <Confirm onClick={confirmHandler} >Confirm</Confirm>
@@ -136,13 +136,13 @@ const SidebarWrapper = styled.div<{ isSidebarActive: boolean, isChatOpen: boolea
         z-index: -1;
     `}  
 
-    /* @media (${({ theme }) => theme.media.md}) {
+    @media (${({ theme }) => theme.media.md}) {
         ${({ isChatOpen }) => isChatOpen && `
             width: 0px;
             padding: 6px 0px;
             z-index: -1;
         `}   
-    } */
+    }
 `;
 const Settings = styled.div`
     position: fixed;
@@ -190,26 +190,34 @@ const StartMessagingBg = styled.div<{ isStartMessagingOpen: boolean }>`
     width: 100vw;
     height: 100vh;
     display: flex;
+    opacity: 0;
     justify-content: center;
     align-items: center;
     background-color: rgba(0, 0, 0, 0);
-    transition: 300ms all ease;
+    transition: 400ms all ease-out;
 
     ${({ isStartMessagingOpen }) => isStartMessagingOpen && `
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 500;
+        opacity: 1;
     `}
 `;
-const StartMessaging = styled.div`
+const StartMessaging = styled.div<{ isStartMessagingOpen: boolean }>`
+    transform: scale(0);
     position: absolute;
     z-index: 600;
     padding: 24px;
     border-radius: 6px;
     background-color: ${({ theme }) => theme.colors.bgPrimary};
+    transition: 300ms all ease;
 
     display: flex;
     justify-content: center;
     align-items: center;
+
+    ${({ isStartMessagingOpen }) => isStartMessagingOpen && `
+        transform: scale(1);
+    `}
 `;
 const Input = styled.input`
     height: 24px;

@@ -22,7 +22,7 @@ import { sidebarSlice } from "./slices/sidebarSlice";
 const rootPersistConfig = {
     key: 'root',
     storage: localForage,
-    blacklist: ['searchPanel', 'authorization', 'chat']
+    blacklist: ['searchPanel', 'authorization', 'chat', 'sidebar']
 };
 const authorizationSlicePersistConfig = {
     key: 'authorization',

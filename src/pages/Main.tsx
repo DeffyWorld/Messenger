@@ -118,7 +118,7 @@ export default function Main() {
 
 
     return (<>
-        <Wrapper>
+        <Wrapper isChatOpen={isChatOpen} >
             <Sidebar isChatOpen={isChatOpen} currentUser={currentUser} currentUserLoading={currentUserLoading} />
 
             <MainWrapper onClick={onRootElClick} isChatOpen={isChatOpen} >
@@ -177,12 +177,21 @@ export default function Main() {
 
 
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<{ isChatOpen: boolean }>`
+    width: 360px;
     display: flex;
     background-color: ${({ theme }) => theme.colors.bgPrimary};
+
+    ${({ isChatOpen }) => isChatOpen && `
+        width: 100vw;
+    `}
+
+    @media (${({ theme }) => theme.media.md}) {
+        width: 100vw;
+    }
 `;
 const MainWrapper = styled.section<{ isChatOpen: boolean }>`
-    width: 360px;
+    width: 360px; 
     height: 100vh;
     border-right: 2px solid ${({ theme }) => theme.colors.bgSecondary};
     position: relative;

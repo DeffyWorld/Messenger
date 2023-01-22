@@ -131,7 +131,7 @@ export const authorizationSlice = createSlice({
     name: 'authorization',
     initialState,
     reducers: {
-        setIsLaoding(state, action) {
+        setIsLoading(state, action) {
             state.isLoading = action.payload;
         },
         setLoader(state, action) {
@@ -182,4 +182,4 @@ export const authorizationSlice = createSlice({
 
 
 
-export const { setIsLaoding, setLoader, setActiveTab } = authorizationSlice.actions;
+export const { setIsLoading, setLoader, setActiveTab } = authorizationSlice.actions;
