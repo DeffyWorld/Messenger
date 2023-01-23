@@ -179,6 +179,7 @@ export default function Main() {
 
 
 const Wrapper = styled.div<{ isChatOpen: boolean }>`
+    width: 100vw;
     display: flex;
     background-color: ${({ theme }) => theme.colors.bgPrimary};
 `;
