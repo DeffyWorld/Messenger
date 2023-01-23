@@ -4,7 +4,7 @@ import { ChatFields } from '../types/interfaces';
 import { DocumentData } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { findChats, findMessages, resetFoundItems, setSearchValue } from '../redux/slices/searchPanelSlice';
 import Scrollbars from 'react-custom-scrollbars-2';
@@ -25,15 +25,6 @@ function SearchPanel({ currentUser, membersData, chatList }: Props) {
     const { foundChats, foundMessages, searchValue } = useAppSelector(state => state.searchPanel);
 
 
-
-    const inputRef = useRef<HTMLInputElement>(null!);
-
-    useEffect(() => inputRef.current.focus(), []);
-
-    const exit = () => {
-        dispatch(setSearchValue(''));
-        inputRef.current.blur();
-    }
 
     const searchInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (currentUser !== null && currentUser !== undefined) {
@@ -67,8 +58,8 @@ function SearchPanel({ currentUser, membersData, chatList }: Props) {
         <SearchWrapper searchValue={searchValue !== ''} >
             <Label>
                 <AiOutlineSearch />
-                <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} ref={inputRef} />
-                <Close onClick={exit} style={{ display: searchValue === '' ? 'none' : 'block' }} />
+                <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} />
+                <Close style={{ display: searchValue === '' ? 'none' : 'block' }} />
             </Label>
 
             {searchValue && currentUser &&
@@ -131,7 +122,7 @@ const Label = styled.label`
     display: flex;
     align-items: center;
 `;
-const Input = styled.input<{ ref: any }>`
+const Input = styled.input`
     width: 100%;
     margin-left: 10px;
     border: none;
