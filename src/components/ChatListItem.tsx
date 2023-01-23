@@ -3,8 +3,6 @@ import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 import { MessageFields } from '../types/interfaces'
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
-import { useAppDispatch } from '../redux/hooks';
-import { setIsChatOpen } from '../redux/slices/chatSlice';
 
 
 
@@ -34,7 +32,6 @@ function ChatListItem({
     focusMessage,
     isActive
 }: Props) {
-    const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
     const nowDate = Date.now();
@@ -42,8 +39,6 @@ function ChatListItem({
 
     const onChatListItemClick = () => {
         const focusMessageTimestamp = message ? message.time : null;
-
-        dispatch(setIsChatOpen(true));
         navigate(focusMessage === undefined ? `/chat/${id}` : `/chat/${id}?focusMessage=${focusMessageTimestamp}`);
     }
 

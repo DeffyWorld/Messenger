@@ -122,6 +122,8 @@ export default memo(Sidebar)
 const SidebarWrapper = styled.div<{ isSidebarActive: boolean, isChatOpen: boolean }>`
     position: relative;
     height: 100vh;
+    min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
     width: 64px;
     padding: 6px;
     display: flex;
@@ -187,6 +189,8 @@ const StartMessagingBg = styled.div<{ isStartMessagingOpen: boolean }>`
     z-index: -10;
     width: 100vw;
     height: 100vh;
+    min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
     display: flex;
     opacity: 0;
     justify-content: center;
