@@ -158,6 +158,7 @@ export default function Main() {
                                     currentUser={currentUser?.email!}
                                     message={chat.messages[chat.messages.length - 1]}
                                     lastTimeMembersRead={chat.lastTimeMembersRead}
+                                    isActive={chatMatch && chatMatch.params.id ? chat.id === +chatMatch.params.id : undefined}
                                 />
                             ))
                             : Array.from({ length: Math.floor((window.innerHeight - 105) / 58) }).map((elem, index) => (

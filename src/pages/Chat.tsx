@@ -37,7 +37,7 @@ export default function Chat() {
     }, [chatData, currentUser?.email])
 
     useEffect(() => {
-        if (!chatDataLoading && chatData !== undefined) {
+        if (!chatDataLoading && chatData !== undefined && currentUser) {
             if (chatWith === 'tailorswift@gmail.com' || chatWith === 'barakobama@gmail.com') {
                 setHasUserPermissions(true);
             } else {

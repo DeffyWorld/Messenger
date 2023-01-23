@@ -19,7 +19,8 @@ interface Props {
     currentUser?: string,
     message?: MessageFields,
     lastTimeMembersRead?: any,
-    focusMessage?: boolean
+    focusMessage?: boolean,
+    isActive?: boolean
 }
 function ChatListItem({ 
     id, 
@@ -30,7 +31,8 @@ function ChatListItem({
     currentUser, 
     message, 
     lastTimeMembersRead,
-    focusMessage
+    focusMessage,
+    isActive
 }: Props) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -49,7 +51,7 @@ function ChatListItem({
 
 
     return (
-        <Wrapper onClick={onChatListItemClick} >
+        <Wrapper onClick={onChatListItemClick} isActive={isActive} >
             <UserImageWrapper>
                 <UserImage src={photoURL} referrerPolicy="no-referrer" />
                 {isOnline && <IsUserOnlineIndicator />}
@@ -128,7 +130,7 @@ export default memo(ChatListItem)
 
 
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<{ isActive?: boolean }>`
     padding: 6px 10px;
     border-radius: 6px;
     transition: all 300ms ease;
@@ -141,6 +143,10 @@ const Wrapper = styled.div`
     &:hover {
         background-color: ${({ theme }) => theme.colors.chatBgHover};
     }
+
+    ${({ isActive, theme }) => isActive && `
+        background-color: ${theme.colors.chatBgHover};
+    `}
 `;
 const LinesWrapper = styled.div`
     display: flex;
