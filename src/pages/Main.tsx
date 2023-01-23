@@ -179,17 +179,8 @@ export default function Main() {
 
 
 const Wrapper = styled.div<{ isChatOpen: boolean }>`
-    width: 360px;
     display: flex;
     background-color: ${({ theme }) => theme.colors.bgPrimary};
-
-    ${({ isChatOpen }) => isChatOpen && `
-        width: 100vw;
-    `}
-
-    @media (${({ theme }) => theme.media.md}) {
-        width: 100vw;
-    }
 `;
 const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     width: 360px; 

@@ -133,14 +133,12 @@ const SidebarWrapper = styled.div<{ isSidebarActive: boolean, isChatOpen: boolea
     ${({ isSidebarActive }) => !isSidebarActive && `
         width: 0px;
         padding: 6px 0px;
-        z-index: -1;
     `}  
 
     @media (${({ theme }) => theme.media.md}) {
         ${({ isChatOpen }) => isChatOpen && `
             width: 0px;
             padding: 6px 0px;
-            z-index: -1;
         `}   
     }
 `;

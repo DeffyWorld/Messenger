@@ -115,6 +115,8 @@ const Wrapper = styled.div`
     height: 100vh;
     width: calc(100vw - 360px);
     background: ${({ theme }) => theme.colors.bgPrimary};
+    position: relative;
+    z-index: 10;
 
     @media (${({ theme }) => theme.media.md}) {
         width: 100vw;
