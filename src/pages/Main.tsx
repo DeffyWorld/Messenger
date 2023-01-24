@@ -184,13 +184,14 @@ export default function Main() {
 
 
 const Wrapper = styled.div<{ isChatOpen: boolean }>`
+    height: 100%;
     width: 100vw;
     display: flex;
     background-color: ${({ theme }) => theme.colors.bgPrimary};
 `;
 const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     width: 360px; 
-    height: 100vh;
+    height: 100%;
     min-height: -webkit-fill-available;
     border-right: 2px solid ${({ theme }) => theme.colors.bgSecondary};
     position: relative;
@@ -208,7 +209,7 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     }
 `;
 const ChatsWrapper = styled.div`
-    height: calc(100vh - 30px - 14px - 35px - 18px - 8px);
+    height: calc(100% - 30px - 14px - 35px - 18px - 8px);
     min-height: -webkit-fill-available;
 `;
 const ThumbVertical = styled.div`

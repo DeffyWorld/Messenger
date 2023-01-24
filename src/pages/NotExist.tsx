@@ -28,7 +28,7 @@ export default function NotExist() {
 
 const Wrapper = styled.div`
     width: 100vw;
-    height: 70vh;
+    height: 70%;
     min-height: -webkit-fill-available;
     display: flex;
     flex-direction: column;

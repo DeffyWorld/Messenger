@@ -310,8 +310,7 @@ export default function Authorization() {
 
 const Wrapper = styled.div`
     width: 100vw;
-    height: 100vh;
-    min-height: -webkit-fill-available;
+    height: 100%;
     background-color: ${({ theme }) => theme.colors.authorizationBg};
     display: flex;
     justify-content: center;

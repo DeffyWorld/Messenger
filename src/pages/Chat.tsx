@@ -112,8 +112,7 @@ export default function Chat() {
 
 
 const Wrapper = styled.div`
-    height: 100vh;
-    min-height: -webkit-fill-available;
+    height: 100%;
     width: calc(100vw - 360px);
     display: flex;
     flex-direction: column;
@@ -128,7 +127,6 @@ const Wrapper = styled.div`
 `;
 
 const StatusWrapper = styled.div`
-    /* height: calc(100vh - 55px - 62px); */
     flex: 1;
     width: calc(100vw - 360px);
     display: flex;

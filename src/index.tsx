@@ -34,10 +34,14 @@ const Global = createGlobalStyle`
 		box-sizing: border-box;
 	}
 	html {
- 	 	height: -webkit-fill-available;
+		height: 100%;
 	}
 	body {
 		overflow: hidden;
+		height: 100%;
+	}
+	#root {
+		height: 100%;
 	}
 
 	@font-face {
