@@ -114,7 +114,6 @@ export default function Chat() {
 const Wrapper = styled.div`
     height: 100vh;
     min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
     width: calc(100vw - 360px);
     background: ${({ theme }) => theme.colors.bgPrimary};
     position: relative;
@@ -129,7 +128,6 @@ const Wrapper = styled.div`
 const StatusWrapper = styled.div`
     height: calc(100vh - 55px - 62px);
     min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
     width: calc(100vw - 360px);
     display: flex;
     align-items: center;

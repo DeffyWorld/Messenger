@@ -192,7 +192,6 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     width: 360px; 
     height: 100vh;
     min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
     border-right: 2px solid ${({ theme }) => theme.colors.bgSecondary};
     position: relative;
     overflow: hidden;
@@ -211,7 +210,6 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
 const ChatsWrapper = styled.div`
     height: calc(100vh - 30px - 14px - 35px - 18px - 8px);
     min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
 `;
 const ThumbVertical = styled.div`
     background-color: ${({ theme }) => theme.colors.scrollbarThumb};

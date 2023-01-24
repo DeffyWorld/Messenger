@@ -312,7 +312,6 @@ const Wrapper = styled.div`
     width: 100vw;
     height: 100vh;
     min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
     background-color: ${({ theme }) => theme.colors.authorizationBg};
     display: flex;
     justify-content: center;

@@ -33,6 +33,9 @@ const Global = createGlobalStyle`
 	* {
 		box-sizing: border-box;
 	}
+	html {
+ 	 	height: -webkit-fill-available;
+	}
 	body {
 		overflow: hidden;
 	}

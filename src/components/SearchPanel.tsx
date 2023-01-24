@@ -155,7 +155,6 @@ const SearchResult = styled.div<{ searchResultHeight: number | undefined }>`
     right: 14px;
     max-height: calc(100vh - 28px - 30px - 35px);
     min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
     height: ${({ searchResultHeight }) => searchResultHeight!}px;
     background: ${({ theme }) => theme.colors.searchPanelBg};
     border-radius: 0px 0px 12px 12px;
