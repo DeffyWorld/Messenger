@@ -115,6 +115,8 @@ const Wrapper = styled.div`
     height: 100vh;
     min-height: -webkit-fill-available;
     width: calc(100vw - 360px);
+    display: flex;
+    flex-direction: column;
     background: ${({ theme }) => theme.colors.bgPrimary};
     position: relative;
     z-index: 10;
@@ -126,8 +128,8 @@ const Wrapper = styled.div`
 `;
 
 const StatusWrapper = styled.div`
-    height: calc(100vh - 55px - 62px);
-    min-height: -webkit-fill-available;
+    /* height: calc(100vh - 55px - 62px); */
+    flex: 1;
     width: calc(100vw - 360px);
     display: flex;
     align-items: center;

@@ -26,6 +26,10 @@ function SearchPanel({ currentUser, membersData, chatList }: Props) {
 
 
 
+    const close = () => {
+        dispatch(setSearchValue(''));
+    }
+
     const searchInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (currentUser !== null && currentUser !== undefined) {
             dispatch(setSearchValue(event.target.value));
@@ -59,7 +63,7 @@ function SearchPanel({ currentUser, membersData, chatList }: Props) {
             <Label>
                 <AiOutlineSearch />
                 <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} />
-                <Close style={{ display: searchValue === '' ? 'none' : 'block' }} />
+                <Close style={{ display: searchValue === '' ? 'none' : 'block' }} onClick={close} />
             </Label>
 
             {searchValue && currentUser &&
@@ -149,6 +153,7 @@ const SearchWrapper = styled.div<{ searchValue?: boolean }>`
     `}
 `;
 const SearchResult = styled.div<{ searchResultHeight: number | undefined }>`
+    margin-bottom: 14px;
     position: absolute;
     z-index: 200;
     left: 14px;
