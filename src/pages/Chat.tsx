@@ -1,15 +1,13 @@
 import styled, { keyframes } from 'styled-components';
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom';
-import { database, firestore } from '../firebase';
+import { firestore } from '../firebase';
 import { doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
-import { useObjectVal } from 'react-firebase-hooks/database';
-import { ref } from 'firebase/database';
-import { useAppDispatch } from '../redux/hooks';
-import { setLastTimeMembersRead } from '../redux/slices/chatSlice';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setLastMessage, setLastTimeMembersRead } from '../redux/slices/chatSlice';
 
 import ChatHeader from '../components/ChatHeader';
 import Messages from '../components/Messages';
@@ -26,43 +24,27 @@ export default function Chat() {
 
     const { chatId } = useParams();
     const [currentUser] = useAuthState(auth);
-    const [chatWith, setChatWith] = useState<string | null>(null)
-    const [hasUserPermissions, setHasUserPermissions] = useState<boolean | null>(null);
+    const { chatsData, membersData, membersStatus } = useAppSelector(state => state.main);
 
-    const [chatData, chatDataLoading, chatDataError] = useDocumentData(doc(firestore, 'chats', chatId!));
+
+
+    const chatData = useMemo(() => chatsData !== null ? chatsData.find(chatData => chatData.id === +chatId!) : null, [chatId, chatsData]);
+    const chatWith = useMemo(() => chatData?.members!.find(member => member !== currentUser?.email && member !== 'user'), [chatData?.members, currentUser?.email]);
+    const chatWithData = useMemo(() => membersData?.find(memberData => memberData.email === chatWith), [chatWith, membersData]);
+    const chatWithStatusData = useMemo(() => membersStatus?.find(memberStatus => memberStatus.email === chatWith), [chatWith, membersStatus]);
+    const [messages, , messagesError] = useDocumentData(doc(firestore, 'messages', `${chatId}`));
+
+
+
+    const lastMessage = useMemo(() => messages !== undefined ? messages.messages[messages.messages.length - 1] : null, [messages]);
 
     useEffect(() => {
-        chatData && setChatWith(chatData.members.find((member: string) => member !== currentUser?.email && member !== 'user'));
-        
-    }, [chatData, currentUser?.email])
-
-    useEffect(() => {
-        if (!chatDataLoading && chatData !== undefined && currentUser) {
-            if (chatWith === 'tailorswift@gmail.com' || chatWith === 'barakobama@gmail.com') {
-                setHasUserPermissions(true);
-            } else {
-                const index = chatData!.members.indexOf(currentUser!.email);
-                index !== -1 ? setHasUserPermissions(true) : setHasUserPermissions(false);
-            }
-
+        if (lastMessage && currentUser) {
+            dispatch(setLastTimeMembersRead({ chatId: chatId!, currentUserEmail: currentUser.email! }));
+            dispatch(setLastMessage({ chatId: chatId!, lastMessage: lastMessage }));
         }
 
-    }, [chatData, chatDataLoading, chatWith, currentUser])
-
-
-    const [chatWithData, , chatWithDataError] = useDocumentData(chatWith ? doc(firestore, 'users', chatWith) : undefined);
-    const [chatWithStatusData, , chatWithStatusDataError] = useObjectVal<any>(chatWithData ? ref(database, `usersStatus/${chatWithData.uid}`) : undefined);
-
-
-
-    const lastMessageTimestamp: number | null = chatData !== undefined ? chatData.messages[chatData.messages.length - 1].time : null;
-
-    useEffect(() => {
-        if (lastMessageTimestamp && currentUser && chatWith) {
-            dispatch(setLastTimeMembersRead({ chatWith: chatWith, chatId: chatId!, currentUserEmail: currentUser.email! }));
-        }
-
-    }, [chatId, chatWith, currentUser, dispatch, lastMessageTimestamp])
+    }, [chatId, chatWith, currentUser, dispatch, lastMessage])
 
 
 
@@ -78,30 +60,21 @@ export default function Chat() {
 
 
             <StatusWrapper>
-                {chatData && hasUserPermissions && chatWith && <Messages chatData={chatData} chatWith={chatWith!} />}
-
-                {chatDataLoading === true && chatData === undefined &&
-                    <Loader>
-                        <div></div><div></div><div></div><div></div>
-                    </Loader>
+                {
+                    chatData && chatWithData && chatWithStatusData && messages && `${lastMessage.chatId}` === chatId
+                        ? <Messages messages={messages.messages} lastTimeMembersRead={chatData.lastTimeMembersRead} chatWith={chatWith!} />
+                        : chatData === undefined 
+                            ? <Error>You do not have permission to access this chat or it does not exist</Error>
+                            : messagesError 
+                                ? <Error>{messagesError.message}</Error>
+                                : <Loader><div></div><div></div><div></div><div></div></Loader>
                 }
-
-                {hasUserPermissions === false && <Error>You do not have permissions to this chat</Error>}
-                {chatDataLoading === false && chatData === undefined && hasUserPermissions === null && <Error>This chat does not exist</Error>}
-                {chatDataError && <Error red >{chatDataError.code}</Error>}
-                {chatWithDataError && <Error red >{chatWithDataError.code}</Error>}
-                {chatWithStatusDataError && <Error red >{chatWithStatusDataError.message}</Error>}
             </StatusWrapper>
 
             <InputField
                 chatId={chatId!}
                 currentUserEmail={currentUser ? currentUser.email : null}
-                shouldDisableInputs={
-                    (chatDataError !== undefined || chatWithDataError !== undefined || chatWithStatusDataError !== undefined) ||
-                    (chatDataLoading === false && chatData === undefined) ||
-                    (chatDataLoading === true && chatData === undefined) ||
-                    hasUserPermissions === false
-                }
+                shouldDisableInputs={chatData === null || chatData === undefined || messages === undefined}
             />
         </Wrapper>
     )

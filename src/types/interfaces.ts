@@ -5,8 +5,9 @@ import { EnumMessageType, EnumSortParams, EnumThunkStatus } from "./enums"
 
 export interface ChatFields {
 	id: number,
+	members?: string[],
 	lastTimeMembersRead: any,
-	messages: MessageFields[],
+	lastMessage: MessageFields,
 	memberData: UserFields
 }
 
@@ -33,6 +34,11 @@ export interface MessageFields {
 	contentWidth?: number,
 	contentHeight?: number
 }
+export interface StatusField {
+	email: string,
+	isOnline: boolean,
+	wasOnline: number
+}
 
 
 
@@ -48,7 +54,10 @@ export interface AuthorizationState {
 	}
 }
 
-export interface SortBySliceState {
+export interface MainSliceState {
+	chatsData: ChatFields[] | null,
+	membersData: UserFields[] | null,
+	membersStatus: StatusField[] | null,
 	sortBy: EnumSortParams,
 	isDropdownActive: boolean
 }

@@ -10,8 +10,6 @@ import { ref, onValue, onDisconnect, set } from "firebase/database";
 
 
 
-
-
 export const presence = createAsyncThunk<any, { currentUser: User }, { rejectValue: string }>(
     'authorization/presence', ({ currentUser }, { rejectWithValue }) => {
         const userStatusDatabaseRef = ref(database, `usersStatus/${currentUser.uid}`);
@@ -28,17 +26,18 @@ export const presence = createAsyncThunk<any, { currentUser: User }, { rejectVal
         };
 
         onValue(ref(database, '.info/connected'), (snap) => {
-            if (snap.val() === true) {
-                onDisconnect(userStatusDatabaseRef)
-                    .set(isOfflineForDatabase)
-                    .then(() => {
-                        set(userStatusDatabaseRef, isOnlineForDatabase)
-                        return
-                    })
-                    .catch((error) => {
-                        return rejectWithValue(error.code)
-                    })
+            if (snap.val() === false) {
+                return;
             }
+            onDisconnect(userStatusDatabaseRef)
+                .set(isOfflineForDatabase)
+                .then(() => {
+                    set(userStatusDatabaseRef, isOnlineForDatabase);
+                    return;
+                })
+                .catch((error) => {
+                    return rejectWithValue(error.code)
+                })
         });
     }
 )

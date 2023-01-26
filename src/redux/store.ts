@@ -13,7 +13,7 @@ import {
 
 import { authorizationSlice } from "./slices/authorizationSlice";
 import { chatSlice } from "./slices/chatSlice";
-import { sortBySlice } from "./slices/sortBySlice";
+import { mainSlice } from "./slices/mainSlice";
 import { searchPanelSlice } from "./slices/searchPanelSlice";
 import { sidebarSlice } from "./slices/sidebarSlice";
 
@@ -22,12 +22,17 @@ import { sidebarSlice } from "./slices/sidebarSlice";
 const rootPersistConfig = {
     key: 'root',
     storage: localForage,
-    blacklist: ['searchPanel', 'authorization', 'chat', 'sidebar']
+    blacklist: ['searchPanel', 'authorization', 'main', 'chat', 'sidebar']
 };
 const authorizationSlicePersistConfig = {
     key: 'authorization',
     storage: localForage,
     whitelist: ['activeTab', 'isLoading']
+};
+const mainPersistConfig = {
+    key: 'main',
+    storage: localForage,
+    whitelist: ['sortBy', 'isDropdownActive']
 };
 const chatPersistConfig = {
     key: 'chat',
@@ -37,7 +42,7 @@ const chatPersistConfig = {
 
 const rootReducer = combineReducers({
     authorization: persistReducer(authorizationSlicePersistConfig, authorizationSlice.reducer),
-    sortBy: sortBySlice.reducer,
+    main: persistReducer(mainPersistConfig, mainSlice.reducer),
     sidebar: sidebarSlice.reducer,
     searchPanel: searchPanelSlice.reducer,
     chat: persistReducer(chatPersistConfig, chatSlice.reducer)

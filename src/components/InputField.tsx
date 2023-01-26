@@ -63,40 +63,40 @@ export default function InputField({ chatId, currentUserEmail, shouldDisableInpu
             await dispatch(getJoke({ chatId: chatId }));
             await dispatch(setIsTyping({ user: chatWith, value: false }));
         }
-}
+    }
 
 
 
-return (
-    <Form onSubmit={handleSubmit(onSubmit)} >
-        <ImageInput
-            type={'file'}
-            accept={'image/*'}
-            id={'image'}
-            {...register('image', { disabled: shouldDisableInputs })}
-        />
-        <ImageLabel htmlFor={'image'} isEmpty={imageField === undefined || imageField.length === 0} >
-            <AiOutlinePaperClip />
-        </ImageLabel>
+    return (
+        <Form onSubmit={handleSubmit(onSubmit)} >
+            <ImageInput
+                type={'file'}
+                accept={'image/*'}
+                id={'image'}
+                {...register('image', { disabled: shouldDisableInputs })}
+            />
+            <ImageLabel htmlFor={'image'} isEmpty={imageField === undefined || imageField.length === 0} >
+                <AiOutlinePaperClip />
+            </ImageLabel>
 
-        <TextInput
-            autoComplete='off'
-            type={'text'}
-            placeholder={'Type your message here...'}
-            {...register('text', {
-                maxLength: {
-                    value: 200,
-                    message: 'Not more than two hundred characters',
-                },
-                disabled: shouldDisableInputs
-            })}
-        />
+            <TextInput
+                autoComplete='off'
+                type={'text'}
+                placeholder={'Type your message here...'}
+                {...register('text', {
+                    maxLength: {
+                        value: 200,
+                        message: 'Not more than two hundred characters',
+                    },
+                    disabled: shouldDisableInputs
+                })}
+            />
 
-        <Send onClick={handleSubmit(onSubmit)} disabled={!isValid} isValid={isValid} >Send</Send>
+            <Send onClick={handleSubmit(onSubmit)} disabled={!isValid} isValid={isValid} >Send</Send>
 
-        {errors && (<Errors></Errors>)}
-    </Form>
-)
+            {errors && (<Errors></Errors>)}
+        </Form>
+    )
 }
 
 

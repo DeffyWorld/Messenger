@@ -74,7 +74,7 @@ function Message(props: Props, ref: ForwardedRef<HTMLDivElement>) {
                     threshold={30}
                     scrollPosition={props.scrollPosition}
                     wrapperClassName={'blur-wrapper'}
-                    style={{ width: 'inherit', height: 'inherit', maxWidth: '75vw', maxHeight: '240px', borderRadius: 'inherit', objectFit:'cover' }}
+                    style={{ width: 'inherit', height: 'inherit', maxWidth: '100%', maxHeight: '240px', borderRadius: 'inherit', objectFit:'cover' }}
                 />
             }
 
@@ -101,7 +101,7 @@ export default memo(forwardRef(Message));
 
 
 const MessageWrapper = styled.div<{ round: boolean, fromCurrentUser: boolean, isPhoto: boolean, contentWidth?: number, contentHeight?: number }>`
-    max-width: 75vw;
+    max-width: 75%;
     margin: 5px 8px;
     padding: 6px 12px;
     align-self: flex-start;
@@ -130,7 +130,7 @@ const MessageWrapper = styled.div<{ round: boolean, fromCurrentUser: boolean, is
 
     .blur-wrapper {
         width: inherit;
-        max-width: 75vw;
+        max-width: 100%;
         height: inherit;
         max-height: 240px;
         display: flex;

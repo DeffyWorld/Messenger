@@ -4,9 +4,8 @@ import { MdOutlineLogout } from 'react-icons/md';
 import { GrFormClose } from 'react-icons/gr';
 import { useState, useRef, memo } from 'react'
 import { getAuth, User } from 'firebase/auth';
-import { arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { firestore } from '../firebase';
-import { useAppSelector } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { createChat } from '../redux/slices/sidebarSlice';
 
 
 
@@ -19,6 +18,7 @@ interface Props {
 }
 function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
     const auth = getAuth();
+    const dispatch = useAppDispatch();
 
     const [isStartMessagingOpen, setIsStartMessagingOpen] = useState<boolean>(false);
     const { isSidebarActive } = useAppSelector(state => state.sidebar);
@@ -33,30 +33,11 @@ function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
     }
 
     const confirmHandler = async () => {
-        const id = Date.now();
-
-        await setDoc(doc(firestore, "chats", `${id}`), {
-            id: id,
-            lastTimeMembersRead: {},
-            members: [currentUser!.email, inputValue.current],
-            messages: arrayUnion({
-                chatId: id,
-                content: 'Hello!',
-                from: currentUser!.email,
-                time: Date.now(),
-                type: 'text'
-            })
-        })
-
-        const currentUserEmail = currentUser!.email!.split('.')[0];
-        const inputEmail = inputValue.current.split('.')[0];
-        await updateDoc(doc(firestore, 'chats', `${id}`), {
-            [`lastTimeMembersRead.${currentUserEmail}`]: 0,
-            [`lastTimeMembersRead.${inputEmail}`]: 0
-        })
-
-        inputValue.current = '';
-        setIsStartMessagingOpen(false);
+        if (currentUser) {
+            dispatch(createChat({ currentUserEmail: currentUser.email!, inputValue: inputValue.current }));
+            inputValue.current = '';
+            setIsStartMessagingOpen(false);
+        }
     }
 
     const logOut = () => {

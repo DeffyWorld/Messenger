@@ -4,14 +4,12 @@ import { ChatFields } from '../types/interfaces';
 
 import { useEffect, useMemo } from 'react'
 import { database, firestore } from '../firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { ref } from 'firebase/database';
-import { useListVals } from 'react-firebase-hooks/database';
+import { onValue, ref, query as dbquery } from 'firebase/database';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setIsDropdownActive } from '../redux/slices/sortBySlice';
+import { setChatsData, setIsDropdownActive, setMembersData, setMembersStatus } from '../redux/slices/mainSlice';
 import { presence } from '../redux/slices/authorizationSlice';
 import { Outlet, useMatch, useNavigate } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
@@ -34,51 +32,70 @@ export default function Main() {
     const dispatch = useAppDispatch();
 
     const [currentUser, currentUserLoading] = useAuthState(auth);
-    const { sortBy, isDropdownActive } = useAppSelector(state => state.sortBy);
+    const { chatsData, membersData, membersStatus, sortBy, isDropdownActive } = useAppSelector(state => state.main);
     const { isChatOpen } = useAppSelector(state => state.chat);
     const chatMatch = useMatch('/chat/:id');
+
+
 
     const onRootElClick = () => {
         isDropdownActive && dispatch(setIsDropdownActive(false));
     }
 
-    useEffect(() => {
-        chatMatch !== null 
-            ? dispatch(setIsChatOpen(true))
-            : dispatch(setIsChatOpen(false));
-
-    }, [chatMatch, dispatch])
+    useEffect(() => {chatMatch !== null ? dispatch(setIsChatOpen(true)) : dispatch(setIsChatOpen(false))}, [chatMatch, dispatch])
 
 
 
-    const [chatsData, , chatsDataError] = useCollectionData(
-        currentUser !== null && currentUser !== undefined
-            ? query(collection(firestore, 'chats'), where('members', 'array-contains-any', ['user', currentUser.email!]))
-            : undefined
-    )
+    const members = useMemo(() => chatsData?.map((chat) => {
+        return chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email)!;
 
-    const members: string[] | undefined = useMemo(() => chatsData?.map((chat) => {
-        return chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email)
     }), [chatsData, currentUser?.email])
 
-    const [membersData, , membersDataError] = useCollectionData(
-        members !== undefined && currentUser !== null && currentUser !== undefined
-            ? query(collection(firestore, 'users'), where('email', 'in', [...members, currentUser.email]))
-            : undefined
-    )
+    useEffect(() => {
+        if (currentUser !== null && currentUser !== undefined) {
+            onSnapshot(query(collection(firestore, 'chats'), where('members', 'array-contains-any', ['user', currentUser.email!])), (snapshot) => {
+                let chatsData: any = [];
+                snapshot.forEach(chat => chatsData = [...chatsData, chat.data()]);
+                dispatch(setChatsData(chatsData));
+            })
+        }
 
-    const [membersStatus, , membersStatusError] = useListVals<any>(ref(database, 'usersStatus'));
+    }, [currentUser, dispatch])
+
+    useEffect(() => {
+        if (members !== undefined && currentUser !== null && currentUser !== undefined) {
+            onSnapshot(query(collection(firestore, 'users'), where('email', 'in', [...members, currentUser.email])), (snapshot) => {
+                let membersData: any = [];
+                snapshot.forEach(memberData => membersData = [...membersData, memberData.data()]);
+                dispatch(setMembersData(membersData));
+            })
+        }
+
+    }, [currentUser, members, dispatch])
+
+    useEffect(() => {
+        if (membersData !== null) {
+            membersData.forEach((memberData) => {
+                onValue(dbquery(ref(database, `usersStatus/${memberData.uid}`)), (snapshot) => {
+                    dispatch(setMembersStatus(snapshot.val()));
+                })
+            })
+        }
+
+    }, [dispatch, membersData])
+
+
 
     const sortedChatList: ChatFields[] | undefined = useMemo(() => {
         if (chatsData && membersData && membersStatus && membersStatus.length !== 0 && membersData.length - 1 === chatsData.length) {
             const chatList: ChatFields[] | undefined = chatsData.map((chat) => {
-                const member = chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email);
-                const memberData = membersData.find((memberData) => memberData.email === member);
-                const memberStatusData = membersStatus.find((memberStatus) => memberStatus.email === member);
+                const member = chat.members!.find((member: string) => member !== 'user' && member !== currentUser?.email)!;
+                const memberData = membersData.find((memberData) => memberData.email === member)!;
+                const memberStatusData = membersStatus.find((memberStatus) => memberStatus.email === member)!;
                 return {
                     id: chat.id,
                     lastTimeMembersRead: chat.lastTimeMembersRead,
-                    messages: chat.messages,
+                    lastMessage: chat.lastMessage,
                     memberData: {
                         displayName: memberData?.displayName,
                         email: memberData?.email,
@@ -96,23 +113,14 @@ export default function Main() {
 
                     return firstValueName < secondValueName ? -1 : 1;
                 } else {
-                    const firstValueTime = firstValue.messages[firstValue.messages.length - 1].time;
-                    const secondValueTime = secondValue.messages[secondValue.messages.length - 1].time;
+                    const firstValueTime = firstValue.lastMessage.time;
+                    const secondValueTime = secondValue.lastMessage.time;
 
                     return secondValueTime - firstValueTime;
                 }
             })
         }
     }, [chatsData, currentUser?.email, membersData, membersStatus, sortBy])
-
-
-
-    useEffect(() => {
-        chatsDataError !== undefined && console.error(chatsDataError);
-        membersDataError !== undefined && console.error(membersDataError);
-        membersStatusError !== undefined && console.error(membersStatusError);
-
-    }, [chatsDataError, membersDataError, membersStatusError])
 
     useEffect(() => {
         currentUserLoading === false && currentUser === null && navigate('/authorization', { replace: true });
@@ -161,7 +169,7 @@ export default function Main() {
                                     photoURL={chat.memberData!.photoURL}
                                     isOnline={chat.memberData!.isOnline}
                                     currentUser={currentUser?.email!}
-                                    message={chat.messages[chat.messages.length - 1]}
+                                    message={chat.lastMessage}
                                     lastTimeMembersRead={chat.lastTimeMembersRead}
                                     isActive={chatMatch && chatMatch.params.id ? chat.id === +chatMatch.params.id : undefined}
                                 />

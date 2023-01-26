@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { ChatInputFields, ChatSliceState, ImageResolution } from "../../types/interfaces";
+import { ChatInputFields, ChatSliceState, ImageResolution, MessageFields } from "../../types/interfaces";
 import { EnumMessageType, EnumThunkStatus } from "../../types/enums";
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
@@ -10,10 +10,10 @@ import axios from "axios";
 
 
 
-export const setLastTimeMembersRead = createAsyncThunk<any, { chatWith: string, chatId: string, currentUserEmail: string }, { rejectValue: string }>(
-    'chat/setLastTimeMembersRead', async ({ chatWith, chatId, currentUserEmail }, { rejectWithValue }) => {
+export const setLastTimeMembersRead = createAsyncThunk<any, { chatId: string, currentUserEmail: string }, { rejectValue: string }>(
+    'chat/setLastTimeMembersRead', async ({ chatId, currentUserEmail }, { rejectWithValue }) => {
         try {
-            if (chatWith === 'tailorswift@gmail.com' || chatWith === 'barakobama@gmail.com') {
+            if (chatId === '0' || chatId === '1') {
                 updateDoc(doc(firestore, 'chats', `${chatId}`), {
                     'lastTimeMembersRead.user': Date.now()
                 })
@@ -40,6 +40,18 @@ export const setIsTyping = createAsyncThunk<any, { user: string, value: boolean}
     }
 )
 
+export const setLastMessage = createAsyncThunk<any, { chatId: string, lastMessage: MessageFields}, { rejectValue: string }>(
+    'chat/setLastMessage', ({ chatId, lastMessage }, { rejectWithValue }) => {
+        updateDoc(doc(firestore, 'chats', `${chatId}`), {
+            lastMessage: lastMessage
+        }).then(() => {
+            return
+        }).catch((error) => {
+            rejectWithValue(error.code);
+        })
+    }
+)
+
 export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId: string, currentUserEmail: string }, { rejectValue: string }>(
     'chat/sendMessage', async ({ data, chatId, currentUserEmail }, { rejectWithValue }) => {
         const sendMessage = async (
@@ -49,7 +61,7 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
             imageResolution?: ImageResolution
         ) => {
             if (type !== EnumMessageType.Image) {
-                await updateDoc(doc(firestore, 'chats', `${chatId}`), {
+                await updateDoc(doc(firestore, 'messages', `${chatId}`), {
                     messages: arrayUnion({
                         chatId: chatId,
                         content: content,
@@ -59,7 +71,7 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
                     })
                 })
             } else {
-                await updateDoc(doc(firestore, 'chats', `${chatId}`), {
+                await updateDoc(doc(firestore, 'messages', `${chatId}`), {
                     messages: arrayUnion({
                         chatId: chatId,
                         content: content,
@@ -152,7 +164,7 @@ export const getJoke = createAsyncThunk<any, { chatId: string }, { rejectValue: 
 
             await new Promise((resolve, reject) => {
                 setTimeout(() => {
-                    updateDoc(doc(firestore, 'chats', `${chatId}`), {
+                    updateDoc(doc(firestore, 'messages', `${chatId}`), {
                         messages: arrayUnion({
                             chatId: chatId,
                             content: joke,

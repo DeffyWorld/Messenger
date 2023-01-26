@@ -14,36 +14,36 @@ export const searchPanelSlice = createSlice({
     initialState,
     reducers: {
         findChats(state, action) {
-            state.foundChats = action.payload.filter((chat: ChatFields) => {
-                return chat.memberData!.displayName.toLocaleLowerCase().includes(state.searchValue.toLowerCase());
-            })
+            // state.foundChats = action.payload.filter((chat: ChatFields) => {
+            //     return chat.memberData!.displayName.toLocaleLowerCase().includes(state.searchValue.toLowerCase());
+            // })
         },
         findMessages(state, action) { 
-            const { chatList, membersData, searchValue, currentUserEmail } = action.payload
-            let foundMessages: MessageFields[] = [];
+            // const { chatList, membersData, searchValue, currentUserEmail } = action.payload
+            // let foundMessages: MessageFields[] = [];
 
-            chatList.forEach((chat: ChatFields) => {
-                const messages = chat.messages.filter((message) => {
-                    return message.type === 'text' && message.content.toLocaleLowerCase().includes(searchValue.toLowerCase())
-                })
+            // chatList.forEach((chat: ChatFields) => {
+            //     const messages = chat.messages.filter((message) => {
+            //         return message.type === 'text' && message.content.toLocaleLowerCase().includes(searchValue.toLowerCase())
+            //     })
 
-                const messagesWithChatData = messages.map((message) => {
-                    return {...message, chatId: chat.id, lastTimeMembersRead: chat.lastTimeMembersRead}
-                })
+            //     const messagesWithChatData = messages.map((message) => {
+            //         return {...message, chatId: chat.id, lastTimeMembersRead: chat.lastTimeMembersRead}
+            //     })
 
-                foundMessages = [...foundMessages, ...messagesWithChatData]
-            })
+            //     foundMessages = [...foundMessages, ...messagesWithChatData]
+            // })
 
-            state.foundMessages = foundMessages.map((message) => {
-                const memberData: UserFields = membersData.find((memberData: UserFields) => {
-                    if (message.from !== 'user') {
-                        return memberData.email === message.from
-                    } else {
-                        return memberData.email === currentUserEmail
-                    }
-                });
-                return {...message, displayName: memberData.displayName, photoURL: memberData.photoURL}
-            })
+            // state.foundMessages = foundMessages.map((message) => {
+            //     const memberData: UserFields = membersData.find((memberData: UserFields) => {
+            //         if (message.from !== 'user') {
+            //             return memberData.email === message.from
+            //         } else {
+            //             return memberData.email === currentUserEmail
+            //         }
+            //     });
+            //     return {...message, displayName: memberData.displayName, photoURL: memberData.photoURL}
+            // })
         },
         setSearchValue(state, action) {
             state.searchValue = action.payload;

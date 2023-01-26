@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
-import { ChatFields } from '../types/interfaces';
-import { DocumentData } from 'firebase/firestore';
+import { ChatFields, UserFields } from '../types/interfaces';
 import { User } from 'firebase/auth';
 
 import { memo, useEffect, useMemo } from 'react';
@@ -18,7 +17,7 @@ import ChatListItem from './ChatListItem';
 interface Props {
     currentUser: User | null | undefined,
     chatList: ChatFields[] | undefined,
-    membersData: DocumentData[] | undefined
+    membersData: UserFields[] | null
 }
 function SearchPanel({ currentUser, membersData, chatList }: Props) {
     const dispatch = useAppDispatch();

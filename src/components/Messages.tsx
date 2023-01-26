@@ -4,7 +4,6 @@ import { MessageFields } from '../types/interfaces';
 import { EnumMessageType } from '../types/enums';
 import { useEffect, useRef, useState } from 'react'
 import { CSSTransition } from 'react-transition-group';
-import { DocumentData } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import { LazyComponentProps, trackWindowScroll } from 'react-lazy-load-image-component';
@@ -17,10 +16,11 @@ import Message from './Message';
 
 
 interface Props extends LazyComponentProps {
-    chatData: DocumentData,
+    messages: MessageFields[],
+    lastTimeMembersRead: any,
     chatWith: string
 }
-function Messages({ chatData, chatWith, scrollPosition }: Props) {
+function Messages({ messages, lastTimeMembersRead, chatWith, scrollPosition }: Props) {
     const [searchParams, setSearchParams] = useSearchParams();
     const focusMessageTimestamp = searchParams.get('focusMessage') === null ? null : Number(searchParams.get('focusMessage'));
 
@@ -50,7 +50,7 @@ function Messages({ chatData, chatWith, scrollPosition }: Props) {
 
         return () => { lastMessageRefCurrent && observer.unobserve(lastMessageRefCurrent) }
 
-    }, [chatData?.messages.length])
+    }, [messages.length])
 
 
 
@@ -65,7 +65,7 @@ function Messages({ chatData, chatWith, scrollPosition }: Props) {
 
     }, [setSearchParams])
 
-    useEffect(() => { isViewportOnBottom && scrollbar.current && scrollbar.current.scrollToBottom() }, [chatData?.messages, isViewportOnBottom])
+    useEffect(() => { isViewportOnBottom && scrollbar.current && scrollbar.current.scrollToBottom() }, [messages, isViewportOnBottom])
 
 
 
@@ -76,7 +76,7 @@ function Messages({ chatData, chatWith, scrollPosition }: Props) {
             renderThumbVertical={(props) => <ThumbVertical {...props} />}
             renderTrackVertical={(props) => <TrackVertical {...props} />}
         >
-            {chatData?.messages.map((message: MessageFields, index: number, messages: MessageFields[]) => (
+            {messages.map((message, index, messages) => (
                 <Message
                     key={`${message.time}_${index}`}
                     time={message.time}
@@ -90,7 +90,7 @@ function Messages({ chatData, chatWith, scrollPosition }: Props) {
                     prevMessageTime={index !== 0 ? messages[index - 1].time : undefined}
                     prevMessageFrom={index !== 0 ? messages[index - 1].from : undefined}
                     chatWith={chatWith}
-                    readed={message.from === chatWith || message.from === 'user' ? message.time < chatData.lastTimeMembersRead[chatWith.split('.')[0]] : undefined}
+                    readed={message.from === chatWith || message.from === 'user' ? message.time < lastTimeMembersRead[chatWith.split('.')[0]] : undefined}
                     scrollPosition={message.type === EnumMessageType.Image ? scrollPosition : undefined}
                     ref={message.time === focusMessageTimestamp ? focusMessageRef : messages.length - 1 === index ? lastMessageRef : undefined}
                 />

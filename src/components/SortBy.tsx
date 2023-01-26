@@ -5,7 +5,7 @@ import { EnumSortParams } from '../types/enums';
 
 import { IconContext } from 'react-icons';
 import { useAppDispatch } from '../redux/hooks';
-import { setIsDropdownActive, setSortBy } from '../redux/slices/sortBySlice';
+import { setIsDropdownActive, setSortBy } from '../redux/slices/mainSlice';
 
 
 
