@@ -1,1 +1,1 @@
-https://main--messengr.netlify.app/
+https://messengr.netlify.app
