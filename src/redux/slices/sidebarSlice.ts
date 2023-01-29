@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { SidebarSliceState } from "../../types/interfaces";
-import { arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '../../firebase';
 
 
@@ -14,13 +14,7 @@ export const createChat = createAsyncThunk<any, { currentUserEmail: string, inpu
                 id: id,
                 lastTimeMembersRead: {},
                 members: [currentUserEmail, inputValue],
-                messages: arrayUnion({
-                    chatId: id,
-                    content: 'Hello!',
-                    from: currentUserEmail,
-                    time: Date.now(),
-                    type: 'text'
-                })
+                lastMessage: null
             })
 
             const splittedCurrentUserEmail = currentUserEmail.split('.')[0];
@@ -29,6 +23,8 @@ export const createChat = createAsyncThunk<any, { currentUserEmail: string, inpu
                 [`lastTimeMembersRead.${splittedCurrentUserEmail}`]: 0,
                 [`lastTimeMembersRead.${inputEmail}`]: 0
             })
+
+            return id;
         } catch (error: any) {
             rejectWithValue(error.code)
         }

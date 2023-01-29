@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { ChatInputFields, ChatSliceState, ImageResolution, MessageFields } from "../../types/interfaces";
+import { ChatInputFields, ChatSliceState, ImageResolution } from "../../types/interfaces";
 import { EnumMessageType, EnumThunkStatus } from "../../types/enums";
-import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { firestore, storage } from "../../firebase";
 import Resizer from "react-image-file-resizer";
@@ -28,7 +28,7 @@ export const setLastTimeMembersRead = createAsyncThunk<any, { chatId: string, cu
     }
 )
 
-export const setIsTyping = createAsyncThunk<any, { user: string, value: boolean}, { rejectValue: string }>(
+export const setIsTyping = createAsyncThunk<any, { user: string, value: boolean }, { rejectValue: string }>(
     'chat/setIsTyping', ({ user, value }, { rejectWithValue }) => {
         updateDoc(doc(firestore, 'users', `${user}`), {
             isTyping: value
@@ -40,7 +40,7 @@ export const setIsTyping = createAsyncThunk<any, { user: string, value: boolean}
     }
 )
 
-export const setLastMessage = createAsyncThunk<any, { chatId: string, lastMessage: MessageFields}, { rejectValue: string }>(
+export const setLastMessage = createAsyncThunk<any, { chatId: string, lastMessage: any }, { rejectValue: string }>(
     'chat/setLastMessage', ({ chatId, lastMessage }, { rejectWithValue }) => {
         updateDoc(doc(firestore, 'chats', `${chatId}`), {
             lastMessage: lastMessage
@@ -60,28 +60,25 @@ export const sendMessage = createAsyncThunk<any, { data: ChatInputFields, chatId
             minifiedContent?: string,
             imageResolution?: ImageResolution
         ) => {
+            const dateNow = Date.now();
             if (type !== EnumMessageType.Image) {
-                await updateDoc(doc(firestore, 'messages', `${chatId}`), {
-                    messages: arrayUnion({
-                        chatId: chatId,
-                        content: content,
-                        from: chatId === '0' || chatId === '1' ? 'user' : currentUserEmail,
-                        time: Date.now(),
-                        type: type
-                    })
+                await setDoc(doc(firestore, `messages/${chatId}/chatMessages`, `${dateNow}`), {
+                    chatId: chatId,
+                    content: content,
+                    from: chatId === '0' || chatId === '1' ? 'user' : currentUserEmail,
+                    time: dateNow,
+                    type: type
                 })
             } else {
-                await updateDoc(doc(firestore, 'messages', `${chatId}`), {
-                    messages: arrayUnion({
-                        chatId: chatId,
-                        content: content,
-                        minifiedContent: minifiedContent,
-                        from: chatId === '0' || chatId === '1' ? 'user' : currentUserEmail,
-                        time: Date.now(),
-                        type: type,
-                        contentWidth: imageResolution!.imageWidth,
-                        contentHeight: imageResolution!.imageHeight
-                    })
+                await setDoc(doc(firestore, `messages/${chatId}/chatMessages`, `${dateNow}`), {
+                    chatId: chatId,
+                    content: content,
+                    minifiedContent: minifiedContent,
+                    from: chatId === '0' || chatId === '1' ? 'user' : currentUserEmail,
+                    time: dateNow,
+                    type: type,
+                    contentWidth: imageResolution!.imageWidth,
+                    contentHeight: imageResolution!.imageHeight
                 })
             }
         }
@@ -164,14 +161,13 @@ export const getJoke = createAsyncThunk<any, { chatId: string }, { rejectValue: 
 
             await new Promise((resolve, reject) => {
                 setTimeout(() => {
-                    updateDoc(doc(firestore, 'messages', `${chatId}`), {
-                        messages: arrayUnion({
-                            chatId: chatId,
-                            content: joke,
-                            from: chatId === '0' ? 'tailorswift@gmail.com' : 'barakobama@gmail.com',
-                            time: Date.now(),
-                            type: EnumMessageType.Text
-                        })
+                    const dateNow = Date.now();
+                    setDoc(doc(firestore, `messages/${chatId}/chatMessages`, `${dateNow}`), {
+                        chatId: chatId,
+                        content: joke,
+                        from: chatId === '0' ? 'tailorswift@gmail.com' : 'barakobama@gmail.com',
+                        time: dateNow,
+                        type: EnumMessageType.Text
                     }).then(() => {
                         resolve(undefined);
                     })

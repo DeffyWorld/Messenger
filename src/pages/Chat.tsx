@@ -2,10 +2,10 @@ import styled, { keyframes } from 'styled-components';
 import { useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom';
 import { firestore } from '../firebase';
-import { doc } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setLastMessage, setLastTimeMembersRead } from '../redux/slices/chatSlice';
 
@@ -32,14 +32,14 @@ export default function Chat() {
     const chatWith = useMemo(() => chatData?.members!.find(member => member !== currentUser?.email && member !== 'user'), [chatData?.members, currentUser?.email]);
     const chatWithData = useMemo(() => membersData?.find(memberData => memberData.email === chatWith), [chatWith, membersData]);
     const chatWithStatusData = useMemo(() => membersStatus?.find(memberStatus => memberStatus.email === chatWith), [chatWith, membersStatus]);
-    const [messages, , messagesError] = useDocumentData(doc(firestore, 'messages', `${chatId}`));
+    const [messages, messagesLoading, messagesError] = useCollectionData(collection(firestore, `messages/${chatId}/chatMessages`));
 
 
 
-    const lastMessage = useMemo(() => messages !== undefined ? messages.messages[messages.messages.length - 1] : null, [messages]);
+    const lastMessage = useMemo(() => messages !== undefined ? messages[messages.length - 1] : null, [messages]);
 
     useEffect(() => {
-        if (lastMessage && currentUser) {
+        if (lastMessage && currentUser && `${lastMessage.chatId}` === chatId) {
             dispatch(setLastTimeMembersRead({ chatId: chatId!, currentUserEmail: currentUser.email! }));
             dispatch(setLastMessage({ chatId: chatId!, lastMessage: lastMessage }));
         }
@@ -61,13 +61,15 @@ export default function Chat() {
 
             <StatusWrapper>
                 {
-                    chatData && chatWithData && chatWithStatusData && messages && `${lastMessage.chatId}` === chatId
-                        ? <Messages messages={messages.messages} lastTimeMembersRead={chatData.lastTimeMembersRead} chatWith={chatWith!} />
-                        : chatData === undefined 
-                            ? <Error>You do not have permission to access this chat or it does not exist</Error>
-                            : messagesError 
-                                ? <Error>{messagesError.message}</Error>
-                                : <Loader><div></div><div></div><div></div><div></div></Loader>
+                    chatData && chatWithData && chatWithStatusData && messages && lastMessage && `${lastMessage.chatId}` === chatId
+                        ? <Messages messages={messages} lastTimeMembersRead={chatData.lastTimeMembersRead} chatWith={chatWith!} />
+                        : messages?.length === 0 && messagesLoading === false
+                            ? <></>
+                            : chatData === undefined
+                                ? <Error>You do not have permissions to this chat or it does not exist</Error>
+                                : messagesError
+                                    ? <Error red >{messagesError.message}</Error>
+                                    : <Loader><div></div><div></div><div></div><div></div></Loader>
                 }
             </StatusWrapper>
 

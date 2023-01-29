@@ -42,7 +42,7 @@ export default function Main() {
         isDropdownActive && dispatch(setIsDropdownActive(false));
     }
 
-    useEffect(() => {chatMatch !== null ? dispatch(setIsChatOpen(true)) : dispatch(setIsChatOpen(false))}, [chatMatch, dispatch])
+    useEffect(() => { chatMatch !== null ? dispatch(setIsChatOpen(true)) : dispatch(setIsChatOpen(false)) }, [chatMatch, dispatch])
 
 
 
@@ -112,11 +112,13 @@ export default function Main() {
                     const secondValueName = secondValue.memberData!.displayName.split(' ')[0].toLowerCase();
 
                     return firstValueName < secondValueName ? -1 : 1;
-                } else {
+                } else if (firstValue.lastMessage !== null && secondValue.lastMessage !== null) {
                     const firstValueTime = firstValue.lastMessage.time;
                     const secondValueTime = secondValue.lastMessage.time;
 
                     return secondValueTime - firstValueTime;
+                } else {
+                    return -1;
                 }
             })
         }
@@ -140,11 +142,7 @@ export default function Main() {
                     <Hamburger />
                 </Header>
 
-                <SearchPanel
-                    currentUser={currentUser}
-                    chatList={sortedChatList}
-                    membersData={membersData}
-                />
+                <SearchPanel currentUser={currentUser} />
 
                 <SortBy isDropdownActive={isDropdownActive} sortBy={sortBy} />
 
@@ -168,8 +166,11 @@ export default function Main() {
                                     displayName={chat.memberData!.displayName}
                                     photoURL={chat.memberData!.photoURL}
                                     isOnline={chat.memberData!.isOnline}
+                                    isTyping={chat.memberData!.isTyping}
                                     currentUser={currentUser?.email!}
-                                    message={chat.lastMessage}
+                                    time={chat.lastMessage?.time}
+                                    type={chat.lastMessage?.type}
+                                    content={chat.lastMessage?.content}
                                     lastTimeMembersRead={chat.lastTimeMembersRead}
                                     isActive={chatMatch && chatMatch.params.id ? chat.id === +chatMatch.params.id : undefined}
                                 />

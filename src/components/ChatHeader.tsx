@@ -130,7 +130,7 @@ const Status = styled.div`
     font-weight: 400;
     font-size: 14px;
     line-height: 16px;
-    color: ${({ theme }) => theme.colors.status};
+    color: ${({ theme }) => theme.colors.highlited};
 `;
 const WasOnline = styled.div`
     font-family: 'SFPro';

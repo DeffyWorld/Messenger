@@ -6,6 +6,7 @@ import { useState, useRef, memo } from 'react'
 import { getAuth, User } from 'firebase/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { createChat } from '../redux/slices/sidebarSlice';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -19,6 +20,7 @@ interface Props {
 function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
     const auth = getAuth();
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const [isStartMessagingOpen, setIsStartMessagingOpen] = useState<boolean>(false);
     const { isSidebarActive } = useAppSelector(state => state.sidebar);
@@ -34,9 +36,10 @@ function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
 
     const confirmHandler = async () => {
         if (currentUser) {
-            dispatch(createChat({ currentUserEmail: currentUser.email!, inputValue: inputValue.current }));
+            const id = await dispatch(createChat({ currentUserEmail: currentUser.email!, inputValue: inputValue.current }));
             inputValue.current = '';
             setIsStartMessagingOpen(false);
+            navigate(`/chat/${id}`);
         }
     }
 

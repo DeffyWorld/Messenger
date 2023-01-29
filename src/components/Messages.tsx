@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 import { FiChevronDown } from 'react-icons/fi';
-import { MessageFields } from '../types/interfaces';
 import { EnumMessageType } from '../types/enums';
 import { useEffect, useRef, useState } from 'react'
 import { CSSTransition } from 'react-transition-group';
@@ -16,7 +15,7 @@ import Message from './Message';
 
 
 interface Props extends LazyComponentProps {
-    messages: MessageFields[],
+    messages: any[],
     lastTimeMembersRead: any,
     chatWith: string
 }

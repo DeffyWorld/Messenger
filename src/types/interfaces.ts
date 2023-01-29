@@ -7,7 +7,7 @@ export interface ChatFields {
 	id: number,
 	members?: string[],
 	lastTimeMembersRead: any,
-	lastMessage: MessageFields,
+	lastMessage: MessageFields | null,
 	memberData: UserFields
 }
 
@@ -67,9 +67,12 @@ export interface SidebarSliceState {
 }
 
 export interface SearchSliceState {
-	foundChats: ChatFields[],
-	foundMessages: MessageFields[],
-	searchValue: string
+	foundUsers: UserFields[] | undefined,
+	foundMessages: MessageFields[] | undefined,
+	findUsersStatus: EnumThunkStatus | null,
+	findMessagesStatus: EnumThunkStatus | null,
+	findOrCreateChatStatus: EnumThunkStatus | null,
+	isSearchValueEmpty: boolean
 }
 
 export interface ChatSliceState {

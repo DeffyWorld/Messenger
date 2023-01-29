@@ -1,48 +1,65 @@
 import styled from 'styled-components';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
-import { MessageFields } from '../types/interfaces'
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
+import { EnumMessageType } from '../types/enums';
+import { useAppDispatch } from '../redux/hooks';
+import { findOrCreateChat } from '../redux/slices/searchPanelSlice';
 
 
 
 
 
 interface Props {
-    id: number,
     email: string,
     displayName: string,
     photoURL: string,
+    id?: number,
     isOnline?: boolean,
+    isTyping?: boolean,
+    time?: number,
+    type?: EnumMessageType,
+    content?: string,
     currentUser?: string,
-    message?: MessageFields,
     lastTimeMembersRead?: any,
     focusMessage?: boolean,
     isActive?: boolean
+    closeSearchPanel?: () => void
 }
-function ChatListItem({ 
-    id, 
-    email, 
+function ChatListItem({
+    id,
+    email,
     displayName,
     photoURL,
     isOnline,
-    currentUser, 
-    message, 
+    isTyping,
+    time,
+    type,
+    content,
+    currentUser,
     lastTimeMembersRead,
     focusMessage,
-    isActive
+    isActive,
+    closeSearchPanel
 }: Props) {
+    const dispatch = useAppDispatch()
     const navigate = useNavigate();
 
     const nowDate = Date.now();
-    const messageDate = message ? new Date(message.time) : null;
+    const messageDate = time ? new Date(time) : null;
 
-    const onChatListItemClick = () => {
-        const focusMessageTimestamp = message ? message.time : null;
-        navigate(focusMessage === undefined ? `/chat/${id}` : `/chat/${id}?focusMessage=${focusMessageTimestamp}`);
+    const onChatListItemClick = async () => {
+        if (id !== undefined) {
+            const focusMessageTimestamp = time ? time : null;
+            navigate(focusMessage === undefined ? `/chat/${id}` : `/chat/${id}?focusMessage=${focusMessageTimestamp}`);
+        } else {
+            const id = (await dispatch(findOrCreateChat({ chatWith: email, currentUserEmail: currentUser!, navigate: navigate }))).payload;
+            navigate(`/chat/${id}`);
+            closeSearchPanel!();
+        }
     }
 
-    const isMessageFromCurrentUser = message?.from === 'user' || message?.from === currentUser ? true : false;
+    const isMessageFromCurrentUser = email === 'user' || email === currentUser ? true : false;
 
 
     return (
@@ -60,13 +77,13 @@ function ChatListItem({
                         <DisplayName>{displayName}</DisplayName>
                     </ContentWrapper>
 
-                    {messageDate && message &&
+                    {messageDate && time &&
                         <Time>
-                            {nowDate - message.time < 172800000
+                            {nowDate - time < 172800000
                                 ? messageDate.toLocaleTimeString().split('', 5).join('')
-                                : nowDate - message.time < 604800000
+                                : nowDate - time < 604800000
                                     ? messageDate.toDateString().split(' ')[0]
-                                    : nowDate - message.time < 31556926000
+                                    : nowDate - time < 31556926000
                                         ? messageDate.toDateString().split(' ', 2)[1]
                                         : messageDate.toLocaleDateString()
                             }
@@ -76,41 +93,46 @@ function ChatListItem({
 
 
 
-                {message &&
+                {isTyping ?
+                    <LineWrapper>
+                        <ContentWrapper>
+                            <HighlightedText>Typing...</HighlightedText>
+                        </ContentWrapper>
+                    </LineWrapper>
+                    : type &&
                     <LineWrapper>
                         {isMessageFromCurrentUser && <TextFromUser>You:</TextFromUser>}
                         <ContentWrapper>
-                            {message.type === 'text' &&
+                            {type === EnumMessageType.Text &&
                                 (<Text>
-                                    {message.content}
+                                    {content}
                                 </Text>)
                             }
-                            {message.type === 'link' &&
+                            {type === EnumMessageType.Link &&
                                 (<HighlightedText>
-                                    {message.content}
+                                    {content}
                                 </HighlightedText>)
                             }
-                            {message.type === 'image' && (
-                                <ImageMessegeWrapper>
-                                    <ContentImage image={message.content} />
+                            {type === EnumMessageType.Image && (
+                                <ImageMessageWrapper>
+                                    <ContentImage image={content!} />
                                     <HighlightedText>Photo</HighlightedText>
-                                </ImageMessegeWrapper>
+                                </ImageMessageWrapper>
                             )}
                         </ContentWrapper>
 
-                        {isMessageFromCurrentUser
-                            ? 
-                                <IsYourMessegeReadedIndicator>
-                                    {
-                                        message.time < lastTimeMembersRead[email.split('.')[0]]
-                                            ? <BsCheck2All />
-                                            : <BsCheck2 />
-                                    }
-                                </IsYourMessegeReadedIndicator>
+                        {isMessageFromCurrentUser ?
+                            <IsYourMessageReadedIndicator>
+                                {
+                                    time! < lastTimeMembersRead[email.split('.')[0]]
+                                        ? <BsCheck2All />
+                                        : <BsCheck2 />
+                                }
+                            </IsYourMessageReadedIndicator>
 
                             : email === 'tailorswift@gmail.com' || email === 'barakobama@gmail.com'
-                                ? message.time > lastTimeMembersRead['user'] && <UnreadMessegeIndicator />
-                                : message.time > lastTimeMembersRead[currentUser!.split('.')[0]] && <UnreadMessegeIndicator />
+                                ? time! > lastTimeMembersRead['user'] && <UnreadMessageIndicator />
+                                : time! > lastTimeMembersRead[currentUser!.split('.')[0]] && <UnreadMessageIndicator />
                         }
                     </LineWrapper>
                 }
@@ -173,11 +195,11 @@ const IsUserOnlineIndicator = styled.div`
     border: 1px solid ${({ theme }) => theme.colors.bgPrimary};
     border-radius: 100px;
 `;
-const IsYourMessegeReadedIndicator = styled.div`
+const IsYourMessageReadedIndicator = styled.div`
     margin-left: auto;
     color: ${({ theme }) => theme.colors.status};
 `;
-const UnreadMessegeIndicator = styled.div`
+const UnreadMessageIndicator = styled.div`
     flex-shrink: 0;
     margin-left: auto;
     width: 11px;
@@ -237,7 +259,7 @@ const HighlightedText = styled(Text)`
     color: ${({ theme }) => theme.colors.highlited};
 `;
 
-const ImageMessegeWrapper = styled.div`
+const ImageMessageWrapper = styled.div`
     display: flex;
     align-items: center;
 `;

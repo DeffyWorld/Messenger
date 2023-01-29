@@ -31,30 +31,30 @@ export default function SortBy({ isDropdownActive, sortBy }: Props) {
 
     return (
         <SortByWrapper>
-                    <SortByText>Sort by</SortByText>
+            <SortByText>Sort by</SortByText>
 
-                    <DropdownWrapper>
-                        <SortByParam active onClick={toggleDropdown} >
-                            {sortBy}
-                            <IconContext.Provider value={{ style: { margin: '2px 0 0 0' } }}>
-                                {isDropdownActive
-                                    ? (<BiChevronUp />)
-                                    : (<BiChevronDown />)
-                                }
-                            </IconContext.Provider>
-                        </SortByParam>
+            <DropdownWrapper>
+                <SortByParam active onClick={toggleDropdown} >
+                    {sortBy}
+                    <IconContext.Provider value={{ style: { margin: '2px 0 0 0' } }}>
+                        {isDropdownActive
+                            ? (<BiChevronUp />)
+                            : (<BiChevronDown />)
+                        }
+                    </IconContext.Provider>
+                </SortByParam>
 
-                        <Dropdown isDropdownActive={isDropdownActive} >
-                            {sortParams.map((param, index) => (
-                                param !== sortBy && (
-                                    <SortByParam key={`${param}_${index}`} onClick={() => toggleSortByParam(param)}>
-                                        {param}
-                                    </SortByParam>
-                                )
-                            ))}
-                        </Dropdown>
-                    </DropdownWrapper>
-                </SortByWrapper>
+                <Dropdown isDropdownActive={isDropdownActive} >
+                    {sortParams.map((param, index) => (
+                        param !== sortBy && (
+                            <SortByParam key={`${param}_${index}`} onClick={() => toggleSortByParam(param)}>
+                                {param}
+                            </SortByParam>
+                        )
+                    ))}
+                </Dropdown>
+            </DropdownWrapper>
+        </SortByWrapper>
     )
 }
 
@@ -63,7 +63,7 @@ export default function SortBy({ isDropdownActive, sortBy }: Props) {
 
 
 const SortByWrapper = styled.div`
-    margin: 8px 0px 0px 26px;
+    margin: 6px 0px 2px 26px;
     gap: 4px;
     display: inline-flex;
     position: relative;
@@ -89,7 +89,7 @@ const Dropdown = styled.div<{ isDropdownActive: boolean }>`
         display: block;
     `}
 `;
-const SortByParam = styled.div<{active?: boolean}>`
+const SortByParam = styled.div<{ active?: boolean }>`
     font-family: 'SFPro';
     font-weight: 400;
     font-size: 16px;

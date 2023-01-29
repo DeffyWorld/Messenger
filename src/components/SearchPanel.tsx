@@ -1,71 +1,78 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { AiOutlineClose, AiOutlineSearch } from 'react-icons/ai';
-import { ChatFields, UserFields } from '../types/interfaces';
 import { User } from 'firebase/auth';
 
-import { memo, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { findChats, findMessages, resetFoundItems, setSearchValue } from '../redux/slices/searchPanelSlice';
+import { findMessages, findUsers, resetFoundItems, setIsSearchValueEmpty } from '../redux/slices/searchPanelSlice';
 import Scrollbars from 'react-custom-scrollbars-2';
 
 import ChatListItem from './ChatListItem';
+import { EnumThunkStatus } from '../types/enums';
 
 
 
 
 
 interface Props {
-    currentUser: User | null | undefined,
-    chatList: ChatFields[] | undefined,
-    membersData: UserFields[] | null
+    currentUser: User | null | undefined
 }
-function SearchPanel({ currentUser, membersData, chatList }: Props) {
+function SearchPanel({ currentUser }: Props) {
     const dispatch = useAppDispatch();
-    const { foundChats, foundMessages, searchValue } = useAppSelector(state => state.searchPanel);
+    const searchInput = useRef<any>();
+    const { foundUsers, foundMessages, isSearchValueEmpty, findUsersStatus, findMessagesStatus, findOrCreateChatStatus } = useAppSelector(state => state.searchPanel);
 
 
 
-    const close = () => {
-        dispatch(setSearchValue(''));
-    }
+    const close = useCallback(() => {
+        if (searchInput.current) {
+            searchInput.current.value = '';
+            dispatch(setIsSearchValueEmpty(true));
+        }
+    }, [dispatch])
+
 
     const searchInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (currentUser !== null && currentUser !== undefined) {
-            dispatch(setSearchValue(event.target.value));
-            dispatch(findChats(chatList));
-            dispatch(findMessages({
-                chatList: chatList,
-                membersData: membersData,
-                searchValue: searchValue,
-                currentUserEmail: currentUser.email
-            }));
+            event.target.value === '' && isSearchValueEmpty !== (event.target.value === '')
+                ? dispatch(setIsSearchValueEmpty(true))
+                : dispatch(setIsSearchValueEmpty(false));
+            dispatch(findUsers({ currentUserEmail: currentUser.email!, searchValue: event.target.value }));
+            dispatch(findMessages({ searchValue: event.target.value, currentUserEmail: currentUser.email! }));
         }
     }
 
-    useEffect(() => { searchValue === '' && dispatch(resetFoundItems()) }, [dispatch, searchValue]);
+    useEffect(() => { isSearchValueEmpty && dispatch(resetFoundItems()) }, [dispatch, isSearchValueEmpty]);
 
     const searchResultHeight = useMemo(() => {
-        if (searchValue !== '') {
+        if (!isSearchValueEmpty) {
             const foundElemHeight = 58;
-            if (foundMessages.length === 0) {
-                return foundChats.length * foundElemHeight
-            } else {
-                return foundChats.length * foundElemHeight + foundMessages.length * foundElemHeight + 17
+            if (foundUsers && foundUsers.length !== 0) {
+                return foundUsers.length * foundElemHeight;
+            }
+            if (foundMessages && foundMessages.length !== 0) {
+                return foundMessages.length * foundElemHeight + 17;
+            }
+            if (foundUsers && foundUsers.length !== 0 && foundMessages && foundMessages.length !== 0) {
+                return foundUsers.length * foundElemHeight + foundMessages.length * foundElemHeight + 17;
             }
         }
-    }, [foundChats.length, foundMessages.length, searchValue])
+    }, [foundUsers, foundMessages, isSearchValueEmpty])
 
 
 
     return (
-        <SearchWrapper searchValue={searchValue !== ''} >
+        <SearchWrapper round={(foundUsers === undefined || foundUsers.length === 0) && (foundMessages === undefined || foundMessages.length === 0)} >
             <Label>
                 <AiOutlineSearch />
-                <Input placeholder='Search' value={searchValue} onChange={searchInputHandler} />
-                <Close style={{ display: searchValue === '' ? 'none' : 'block' }} onClick={close} />
+                <Input placeholder='Search' ref={searchInput} onChange={searchInputHandler} />
+                {findUsersStatus === EnumThunkStatus.Pending || findMessagesStatus === EnumThunkStatus.Pending || findOrCreateChatStatus === EnumThunkStatus.Pending
+                    ? !isSearchValueEmpty && <Loader><div></div><div></div><div></div><div></div></Loader>
+                    : !isSearchValueEmpty && <Close onClick={close} />
+                }
             </Label>
 
-            {searchValue && currentUser &&
+            {!isSearchValueEmpty && currentUser &&
                 <SearchResult searchResultHeight={searchResultHeight} >
                     <Scrollbars
                         autoHide
@@ -79,29 +86,32 @@ function SearchPanel({ currentUser, membersData, chatList }: Props) {
                         renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{ width: '4px' }} {...props} />}
                         renderTrackVertical={props => <TrackVertical {...props} />}
                     >
-                        {foundChats.map((chat, index) => (
+                        {foundUsers && foundUsers.map((user, index) => (
                             <ChatListItem
-                                key={`${chat.memberData!.displayName}_${index}`}
-                                id={chat.id}
-                                email={chat.memberData!.email!}
-                                displayName={chat.memberData!.displayName}
-                                photoURL={chat.memberData!.photoURL}
+                                key={`${user.displayName}_${index}`}
+                                email={user.email}
+                                displayName={user.displayName}
+                                photoURL={user.photoURL}
+                                currentUser={currentUser.email!}
+                                closeSearchPanel={close}
                             />
                         ))}
-                        {foundMessages.length !== 0 && (
+                        {foundMessages && foundMessages.length !== 0 && (
                             <FoundMessagesAmount>
-                                {`Found ${foundMessages.length} messages`}
+                                {`Found ${foundMessages.length} ${foundMessages.length === 1 ? 'message' : 'messages'}`}
                             </FoundMessagesAmount>
                         )}
-                        {foundMessages.map((message, index) => (
+                        {foundMessages && foundMessages.map((message, index) => (
                             <ChatListItem
                                 key={`${message}_${index}`}
                                 id={message.chatId}
                                 email={message.from}
                                 displayName={message.displayName!}
                                 photoURL={message.photoURL!}
+                                time={message.time}
+                                type={message.type}
+                                content={message.content}
                                 currentUser={currentUser.email!}
-                                message={message}
                                 lastTimeMembersRead={message.lastTimeMembersRead}
                                 focusMessage
                             />
@@ -113,7 +123,7 @@ function SearchPanel({ currentUser, membersData, chatList }: Props) {
     )
 }
 
-export default memo(SearchPanel)
+export default SearchPanel
 
 
 
@@ -139,16 +149,53 @@ const Input = styled.input`
 const Close = styled(props => <AiOutlineClose {...props} />)`
     transform: scale(1.2, 1.1);
 `;
+const ldsRing = keyframes`
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+`
+const Loader = styled.div`
+    display: inline-block;
+    position: relative;
+    width: 17px;
+    height: 17px;
+    margin-right: 2px;
+
+    div {
+        box-sizing: border-box;
+        display: block;
+        position: absolute;
+        width: 17px;
+        height: 17px;
+        border: 2px solid ${({ theme }) => theme.colors.border};
+        border-radius: 50%;
+        animation: ${ldsRing} 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        border-color: ${({ theme }) => theme.colors.textSecondary} transparent transparent transparent;
+
+        &:nth-child(1) {
+            animation-delay: -0.45s;
+        }
+        &:nth-child(2) {
+            animation-delay: -0.3s;
+        }
+        &:nth-child(3) {
+            animation-delay: -0.15s;
+        }
+    }
+`;
 
 
 
-const SearchWrapper = styled.div<{ searchValue?: boolean }>`
+const SearchWrapper = styled.div<{ round?: boolean }>`
     margin: 0px 14px 0px 14px;
     background: ${({ theme }) => theme.colors.searchPanelBg};
-    border-radius: 12px; 
+    border-radius: 12px 12px 0px 0px;
 
-    ${({ searchValue }) => searchValue && `
-        border-radius: 12px 12px 0px 0px;
+    ${({ round }) => round && `
+        border-radius: 12px; 
     `}
 `;
 const SearchResult = styled.div<{ searchResultHeight: number | undefined }>`
