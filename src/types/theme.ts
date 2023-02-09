@@ -5,7 +5,7 @@ export interface Theme {
 		authorizationBg: string,
 		authorizationPrimary: string,
 		authorizationSecondary: string,
-		authorizationInvalid: string,
+		invalid: string,
 
 		bgPrimary: string,
 		bgSecondary: string,

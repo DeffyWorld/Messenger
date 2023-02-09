@@ -1,11 +1,10 @@
 import styled from 'styled-components';
 import { FiChevronDown } from 'react-icons/fi';
-import { EnumMessageType } from '../types/enums';
+import { DocumentData } from 'firebase/firestore';
 import { useEffect, useRef, useState } from 'react'
 import { CSSTransition } from 'react-transition-group';
 import { useSearchParams } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
-import { LazyComponentProps, trackWindowScroll } from 'react-lazy-load-image-component';
 import { useAppSelector } from '../redux/hooks';
 
 import Message from './Message';
@@ -14,12 +13,12 @@ import Message from './Message';
 
 
 
-interface Props extends LazyComponentProps {
-    messages: any[],
+interface Props {
+    messages: DocumentData[],
     lastTimeMembersRead: any,
     chatWith: string
 }
-function Messages({ messages, lastTimeMembersRead, chatWith, scrollPosition }: Props) {
+function Messages({ messages, lastTimeMembersRead, chatWith }: Props) {
     const [searchParams, setSearchParams] = useSearchParams();
     const focusMessageTimestamp = searchParams.get('focusMessage') === null ? null : Number(searchParams.get('focusMessage'));
 
@@ -90,7 +89,6 @@ function Messages({ messages, lastTimeMembersRead, chatWith, scrollPosition }: P
                     prevMessageFrom={index !== 0 ? messages[index - 1].from : undefined}
                     chatWith={chatWith}
                     readed={message.from === chatWith || message.from === 'user' ? message.time < lastTimeMembersRead[chatWith.split('.')[0]] : undefined}
-                    scrollPosition={message.type === EnumMessageType.Image ? scrollPosition : undefined}
                     ref={message.time === focusMessageTimestamp ? focusMessageRef : messages.length - 1 === index ? lastMessageRef : undefined}
                 />
             ))}
@@ -104,7 +102,7 @@ function Messages({ messages, lastTimeMembersRead, chatWith, scrollPosition }: P
     </>)
 }
 
-export default trackWindowScroll(Messages);
+export default Messages;
 
 
 
@@ -116,25 +114,6 @@ const MessagesWrapper = styled.div`
     position: absolute;
     color: ${({ theme }) => theme.colors.bgPrimary};
     background-color: ${({ theme }) => theme.colors.bgPrimary};
-
-    .transition-enter {
-        opacity: 0;
-        bottom: 50px;
-    }
-    .transition-enter-active {
-        opacity: 1;
-        bottom: 80px;
-        transition: 400ms;
-    }
-    .transition-exit {
-        opacity: 1;
-        bottom: 80px;
-    }
-    .transition-exit-active {
-        opacity: 0;
-        bottom: 50px;
-        transition: 400ms;
-    }
 `;
 const ThumbVertical = styled.div`
     background-color: ${({ theme }) => theme.colors.scrollbarThumb};

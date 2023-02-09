@@ -16,6 +16,7 @@
     "hamburgers": "^1.2.1",
     "localforage": "^1.10.0",
     "react": "^18.2.0",
+    "react-avatar-editor": "^13.0.0",
     "react-custom-scrollbars-2": "^4.5.0",
     "react-dom": "^18.2.0",
     "react-firebase-hooks": "^5.1.1",
@@ -27,6 +28,7 @@
     "react-redux": "^8.0.4",
     "react-router-dom": "^6.6.1",
     "react-scripts": "^5.0.1",
+    "react-tooltip": "^5.7.4",
     "react-transition-group": "^4.4.5",
     "redux-persist": "^6.0.0",
     "styled-components": "^5.3.6",
@@ -59,10 +61,8 @@
     ]
   },
   "devDependencies": {
-    "@types/body-scroll-lock": "^3.1.0",
-    "@types/react-custom-scroll": "^4.3.2",
+    "@types/react-avatar-editor": "^13.0.0",
     "@types/react-lazy-load-image-component": "^1.5.2",
-    "@types/react-scroll": "^1.8.4",
     "@types/react-transition-group": "^4.4.5",
     "@types/styled-components": "^5.1.26"
   }

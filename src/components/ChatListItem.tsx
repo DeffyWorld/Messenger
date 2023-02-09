@@ -149,7 +149,6 @@ export default memo(ChatListItem)
 
 const Wrapper = styled.div<{ isActive?: boolean }>`
     padding: 6px 10px;
-    border-radius: 6px;
     transition: all 300ms ease;
     cursor: pointer;
 

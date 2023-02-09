@@ -80,6 +80,12 @@ export interface ChatSliceState {
 	sendMessageStatus: EnumThunkStatus | null
 }
 
+export interface SettingsSliceState {
+	editedAvatarURL: string | null,
+	editedAvatarDataUrl: string | null,
+	setProfileStatus: EnumThunkStatus | null
+}
+
 
 
 export interface AuthorizationFormInputs {
@@ -88,6 +94,10 @@ export interface AuthorizationFormInputs {
 	email: string,
 	password: string,
 	passwordConfirm: string
+}
+export interface SettingsFormInputs {
+	avatar?: any,
+	name?: string
 }
 
 export interface ChatInputFields {

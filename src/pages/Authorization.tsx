@@ -28,7 +28,7 @@ export default function Authorization() {
     const { isLoading, loader, activeTab, authorizationStatus, authorizationErrors } = useAppSelector(state => state.authorization);
     const {
         register,
-        formState: { errors, dirtyFields },
+        formState: { errors, isValid },
         handleSubmit,
         watch,
         setError,
@@ -129,8 +129,8 @@ export default function Authorization() {
                             message: "At least three characters",
                         },
                         maxLength: {
-                            value: 60,
-                            message: "Not more than sixty characters",
+                            value: 15,
+                            message: "Not more than fifteen characters",
                         },
                         disabled: activeTab === 'logIn' ? true : false
                     })}
@@ -152,8 +152,8 @@ export default function Authorization() {
                             message: "At least three characters",
                         },
                         maxLength: {
-                            value: 60,
-                            message: "Not more than sixty characters",
+                            value: 15,
+                            message: "Not more than fifteen characters",
                         },
                         disabled: activeTab === 'logIn' ? true : false
                     })}
@@ -259,23 +259,7 @@ export default function Authorization() {
                 {!isLoading ?
                     <Button
                         onClick={handleSubmit(onSubmit)}
-                        isValid={
-                            activeTab === 'logIn'
-                                ? errors.email !== undefined ||
-                                dirtyFields.email !== true ||
-                                errors.password !== undefined ||
-                                dirtyFields.password !== true
-                                : errors.name !== undefined ||
-                                dirtyFields.name !== true ||
-                                errors.surname !== undefined ||
-                                dirtyFields.surname !== true ||
-                                errors.email !== undefined ||
-                                dirtyFields.email !== true ||
-                                errors.password !== undefined ||
-                                dirtyFields.password !== true ||
-                                errors.passwordConfirm !== undefined ||
-                                dirtyFields.passwordConfirm !== true
-                        }
+                        isValid={!isValid}
                     >
                         {activeTab === 'logIn' ? 'Login' : 'Register'}
                     </Button>
@@ -311,7 +295,7 @@ export default function Authorization() {
 const Wrapper = styled.div`
     width: 100vw;
     height: 100%;
-    background-color: ${({ theme }) => theme.colors.authorizationBg};
+    background-color: ${({ theme }) => theme.colors.bgPrimary};
     display: flex;
     justify-content: center;
     align-items: center;
@@ -383,7 +367,7 @@ const Input = styled.input<{ isValid: boolean, isHidden: boolean }>`
     color: ${({ theme }) => theme.colors.textSecondary};
 
     ${({ isValid, theme }) => !isValid && `
-        border: 2px solid ${theme.colors.authorizationInvalid};
+        border: 2px solid ${theme.colors.invalid};
     `}
     ${({ isHidden }) => isHidden && `
         display: none;
@@ -398,7 +382,7 @@ const ErrorMessage = styled.div`
     font-weight: 400;
     font-size: 13px;
     line-height: 14px;
-    color: ${({ theme }) => theme.colors.authorizationInvalid};
+    color: ${({ theme }) => theme.colors.invalid};
 `
 const ShowPassword = styled.div<{ isHidden: boolean }>`
     position: absolute;

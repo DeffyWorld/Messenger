@@ -70,12 +70,12 @@ const Global = createGlobalStyle`
     }
 `
 
-const theme: Theme = {
+export const theme: Theme = {
 	colors: {
 		authorizationBg: '#e7f6f8',
 		authorizationPrimary: '#BEEEE6',
 		authorizationSecondary: '#75c3b6',
-		authorizationInvalid: '#fba4a4',
+		invalid: '#ff1e1e',
 
 		bgPrimary: '#FFFFFF',
 		bgSecondary: '#EEEEEE',
@@ -87,10 +87,10 @@ const theme: Theme = {
 		scrollbarThumb: '#9e9c9d',
 		scrollbarTrack: '#d6d4d7',
 
-		disabled: '#b1b1b1',
+		disabled: '#d3d3d3',
 		status: '#27AE60',
 		highlited: '#2D9CDB',
-		chatBgHover: '#e6e6e6',
+		chatBgHover: '#f0f0f0',
 		border: '#e2e2e2'
 	},
 	media: {

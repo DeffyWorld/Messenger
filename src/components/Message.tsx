@@ -4,7 +4,7 @@ import 'react-lazy-load-image-component/src/effects/blur.css';
 import styled from 'styled-components';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 import { ForwardedRef, forwardRef, memo } from 'react';
-import { LazyLoadImage, ScrollPosition } from 'react-lazy-load-image-component';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 
 
@@ -24,7 +24,6 @@ interface Props {
     prevMessageFrom?: string,
     chatWith: string,
     readed?: boolean
-    scrollPosition?: ScrollPosition
 }
 function Message(props: Props, ref: ForwardedRef<HTMLDivElement>) {
     const nowDate = Date.now();
@@ -72,7 +71,6 @@ function Message(props: Props, ref: ForwardedRef<HTMLDivElement>) {
                     placeholderSrc={props.minifiedContent}
                     effect="blur"
                     threshold={30}
-                    scrollPosition={props.scrollPosition}
                     wrapperClassName={'blur-wrapper'}
                     style={{ width: 'inherit', height: 'inherit', maxWidth: '100%', maxHeight: '240px', borderRadius: 'inherit', objectFit:'cover' }}
                 />

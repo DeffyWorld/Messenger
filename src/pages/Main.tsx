@@ -10,8 +10,7 @@ import { onValue, ref, query as dbquery } from 'firebase/database';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setChatsData, setIsDropdownActive, setMembersData, setMembersStatus } from '../redux/slices/mainSlice';
-import { presence } from '../redux/slices/authorizationSlice';
-import { Outlet, useMatch, useNavigate } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 
 import ChatListItem from '../components/ChatListItem';
@@ -28,7 +27,6 @@ import { setIsChatOpen } from '../redux/slices/chatSlice';
 
 export default function Main() {
     const auth = getAuth();
-    const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
     const [currentUser, currentUserLoading] = useAuthState(auth);
@@ -38,7 +36,7 @@ export default function Main() {
 
 
 
-    const onRootElClick = () => {
+    const onMainWrapperClick = () => {
         isDropdownActive && dispatch(setIsDropdownActive(false));
     }
 
@@ -124,19 +122,13 @@ export default function Main() {
         }
     }, [chatsData, currentUser?.email, membersData, membersStatus, sortBy])
 
-    useEffect(() => {
-        currentUserLoading === false && currentUser === null && navigate('/authorization', { replace: true });
-        currentUser && dispatch(presence({ currentUser: currentUser }));
-
-    }, [currentUser, currentUserLoading, dispatch, navigate])
-
 
 
     return (<>
         <Wrapper isChatOpen={isChatOpen} >
             <Sidebar isChatOpen={isChatOpen} currentUser={currentUser} currentUserLoading={currentUserLoading} />
 
-            <MainWrapper onClick={onRootElClick} isChatOpen={isChatOpen} >
+            <MainWrapper onClick={onMainWrapperClick} isChatOpen={isChatOpen} >
                 <Header>
                     <Title>Messages</Title>
                     <Hamburger />
@@ -150,10 +142,16 @@ export default function Main() {
                     <Scrollbars
                         autoHide
                         autoHideDuration={400}
-                        renderView={({ style, ...props }) => <div
-                            style={{ ...style, overflowX: 'auto', marginBottom: '0px', padding: '0px 6px' }}
-                            {...props}
-                        />}
+                        // renderView={(props) => <div
+                        //     // style={{ ...style, overflowX: 'auto', marginBottom: '0px', padding: '0px 6px' }}
+                        //     {...props}
+                        // />}
+                        // renderView={({ style, ...props }) =>
+                        //     <div
+                        //         style={{ ...style, overflowX: 'auto', marginBottom: '0px' }}
+                        //         {...props}
+                        //     />
+                        // }
                         renderThumbVertical={({ style, ...props }) => <ThumbVertical style={{ width: '4px' }} {...props} />}
                         renderTrackVertical={props => <TrackVertical {...props} />}
                     >
@@ -199,9 +197,10 @@ const Wrapper = styled.div<{ isChatOpen: boolean }>`
     background-color: ${({ theme }) => theme.colors.bgPrimary};
 `;
 const MainWrapper = styled.section<{ isChatOpen: boolean }>`
+    display: flex;
+    flex-direction: column;
     width: 360px; 
     height: 100%;
-    min-height: -webkit-fill-available;
     border-right: 2px solid ${({ theme }) => theme.colors.bgSecondary};
     position: relative;
     overflow: hidden;
@@ -218,8 +217,7 @@ const MainWrapper = styled.section<{ isChatOpen: boolean }>`
     }
 `;
 const ChatsWrapper = styled.div`
-    height: calc(100% - 30px - 14px - 35px - 18px - 8px);
-    min-height: -webkit-fill-available;
+    flex: 1;
 `;
 const ThumbVertical = styled.div`
     background-color: ${({ theme }) => theme.colors.scrollbarThumb};

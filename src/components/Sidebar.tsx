@@ -30,6 +30,10 @@ function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
         inputValue.current = event.target.value;
     }
 
+    const openSettings = () => {
+        navigate('/settings');
+    }
+
     const startMessagingOpenHandler = () => {
         setIsStartMessagingOpen(!isStartMessagingOpen);
     }
@@ -68,7 +72,7 @@ function Sidebar({ isChatOpen, currentUser, currentUserLoading }: Props) {
 
     return (<>
         <SidebarWrapper isSidebarActive={isSidebarActive} isChatOpen={isChatOpen} >
-            <Settings>
+            <Settings onClick={openSettings} >
                 <RiSettings5Fill />
             </Settings>
 

@@ -15,6 +15,7 @@ import { authorizationSlice } from "./slices/authorizationSlice";
 import { chatSlice } from "./slices/chatSlice";
 import { mainSlice } from "./slices/mainSlice";
 import { searchPanelSlice } from "./slices/searchPanelSlice";
+import { settingsSlice } from "./slices/settingsSlice";
 import { sidebarSlice } from "./slices/sidebarSlice";
 
 
@@ -22,7 +23,7 @@ import { sidebarSlice } from "./slices/sidebarSlice";
 const rootPersistConfig = {
     key: 'root',
     storage: localForage,
-    blacklist: ['searchPanel', 'authorization', 'main', 'chat', 'sidebar']
+    blacklist: ['searchPanel', 'authorization', 'main', 'chat', 'sidebar', 'settings']
 };
 const authorizationSlicePersistConfig = {
     key: 'authorization',
@@ -45,7 +46,8 @@ const rootReducer = combineReducers({
     main: persistReducer(mainPersistConfig, mainSlice.reducer),
     sidebar: sidebarSlice.reducer,
     searchPanel: searchPanelSlice.reducer,
-    chat: persistReducer(chatPersistConfig, chatSlice.reducer)
+    chat: persistReducer(chatPersistConfig, chatSlice.reducer),
+    settings: settingsSlice.reducer
 });
 
 const persistedReducer = persistReducer(rootPersistConfig, rootReducer);

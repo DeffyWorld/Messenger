@@ -59,7 +59,7 @@ export default function Chat() {
             />
 
 
-            <StatusWrapper>
+            <MidWrapper>
                 {
                     chatData && chatWithData && chatWithStatusData && messages && lastMessage && `${lastMessage.chatId}` === chatId
                         ? <Messages messages={messages} lastTimeMembersRead={chatData.lastTimeMembersRead} chatWith={chatWith!} />
@@ -71,7 +71,7 @@ export default function Chat() {
                                     ? <Error red >{messagesError.message}</Error>
                                     : <Loader><div></div><div></div><div></div><div></div></Loader>
                 }
-            </StatusWrapper>
+            </MidWrapper>
 
             <InputField
                 chatId={chatId!}
@@ -101,7 +101,7 @@ const Wrapper = styled.div`
     }
 `;
 
-const StatusWrapper = styled.div`
+const MidWrapper = styled.div`
     flex: 1;
     width: calc(100vw - 360px);
     display: flex;
@@ -110,6 +110,25 @@ const StatusWrapper = styled.div`
 
     @media (${({ theme }) => theme.media.md}) {
         width: 100vw;
+    }
+
+    .transition-enter {
+        opacity: 0;
+        bottom: 50px;
+    }
+    .transition-enter-active {
+        opacity: 1;
+        bottom: 80px;
+        transition: 400ms;
+    }
+    .transition-exit {
+        opacity: 1;
+        bottom: 80px;
+    }
+    .transition-exit-active {
+        opacity: 0;
+        bottom: 50px;
+        transition: 400ms;
     }
 `;
 
