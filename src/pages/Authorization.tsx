@@ -438,7 +438,7 @@ const Loader = styled.div`
     margin-bottom: 40px;
     width: 100%;
     height: 40px;
-    background: ${({ theme }) => theme.colors.authorizationBg};
+    background: ${({ theme }) => theme.colors.bgPrimary};
     border-radius: 7px;
 
     display: flex;
